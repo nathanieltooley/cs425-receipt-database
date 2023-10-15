@@ -1,0 +1,5 @@
+# Amazon S3
+boto3 ~= 1.28.63
+
+# Style Consistency
+black ~= 23.9.1

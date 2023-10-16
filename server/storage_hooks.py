@@ -1,4 +1,5 @@
 import abc
+import datetime as dt
 
 from receipt import Receipt
 
@@ -13,6 +14,22 @@ class StorageHook(abc.ABC):
 
     @abc.abstractmethod
     def fetch_receipt(self, identifier) -> Receipt:
+        pass
+
+    @abc.abstractmethod
+    def fetch_receipts(
+        self, limit: int = None, sort_newest_first: bool = True
+    ) -> list[Receipt]:
+        pass
+
+    @abc.abstractmethod
+    def fetch_receipts_between(
+        self,
+        before: dt.datetime,
+        after: dt.datetime,
+        limit: int = None,
+        sort_newest_first: bool = True,
+    ) -> list[Receipt]:
         pass
 
     @abc.abstractmethod

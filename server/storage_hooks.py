@@ -86,7 +86,7 @@ class StorageHook(abc.ABC):
             receipt: The receipt to edit.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         pass
 
@@ -98,7 +98,7 @@ class StorageHook(abc.ABC):
             receipt: The receipt to delete.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         pass
 
@@ -109,7 +109,7 @@ class StorageHook(abc.ABC):
             identifier: The identifier of the receipt to delete.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         receipt = self.fetch_receipt(identifier)
         return self.delete_receipt(receipt)

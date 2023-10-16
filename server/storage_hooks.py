@@ -113,3 +113,31 @@ class StorageHook(abc.ABC):
         """
         receipt = self.fetch_receipt(identifier)
         return self.delete_receipt(receipt)
+
+    def migrate_to_service(self, new_service: "StorageHook") -> bool:
+        """Migrate all currently stored receipts to a new service.
+
+        Args:
+            new_service: The StorageHook for the service to migrate to.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        for receipt in self.fetch_receipts():
+            if not new_service.upload_receipt(receipt):
+                return False
+        return True
+
+    @abc.abstractmethod
+    @property
+    def storage_version(self) -> str:
+        """Return scheme version the database is using."""
+
+    @abc.abstractmethod
+    def update_storage(self) -> bool:
+        """Migrates a copy of the database to the current scheme version.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        pass

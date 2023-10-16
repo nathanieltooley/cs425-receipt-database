@@ -1,7 +1,14 @@
 import abc
 import datetime as dt
+import enum
 
 from receipt import Receipt
+
+
+class Sort(enum.Enum):
+    """Represents different methods to sort data."""
+    newest = enum.auto()  # Newer items before older, a.k.a newest first
+    oldest = enum.auto()  # Older items before newer, a.k.a oldest first
 
 
 class StorageHook(abc.ABC):
@@ -18,7 +25,7 @@ class StorageHook(abc.ABC):
 
     @abc.abstractmethod
     def fetch_receipts(
-        self, limit: int = None, sort_newest_first: bool = True
+        self, limit: int = None, sort: Sort = Sort.newest
     ) -> list[Receipt]:
         pass
 
@@ -28,7 +35,7 @@ class StorageHook(abc.ABC):
         before: dt.datetime,
         after: dt.datetime,
         limit: int = None,
-        sort_newest_first: bool = True,
+        sort: Sort = Sort.newest,
     ) -> list[Receipt]:
         pass
 

@@ -25,8 +25,9 @@ def upload_receipt():
 
     if file:
         filename = file.filename
+
+        # Read all bytes from file and join them into a single list
         im_bytes = b''.join(file.stream.readlines())
-        file.save(os.path.join(".temp", filename)) # type: ignore
         file.close()
 
         aws = AWSHook()

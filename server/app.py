@@ -16,11 +16,12 @@ def error_response(status: int, error_name: str, error_message: str) -> Response
 @app.route("/api/receipt/upload", methods=["POST"])
 def upload_receipt():
     if "file" not in request.files:
-        pass
+        return error_response(400, "Missing Key", "The file has not been specified.")
 
     file = request.files["file"]
 
     if file.filename == "":
+        return error_response(400, "Missing Filename", "The file has been sent but with no filename.")
         pass
 
     if file:
@@ -33,7 +34,7 @@ def upload_receipt():
         aws = AWSHook()
         aws.upload_receipt(Receipt(filename, im_bytes))
 
-    return error_response(501, "ImplementationError", "Not Fully Implemented")
+    return error_response(400, "Missing File", "No file has been sent.")
 
 
 @app.route("/api/receipt/view")

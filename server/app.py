@@ -12,7 +12,7 @@ def error_response(status: int, error_name: str, error_message: str) -> Response
     return Response(json.dumps(res_json), status=status, mimetype="application/json")
 
 
-@app.route("/api/receipt/upload", method=["POST"])
+@app.route("/api/receipt/upload", methods=["POST"])
 def upload_receipt():
     if "file" not in request.files:
         pass
@@ -24,7 +24,8 @@ def upload_receipt():
 
     if file:
         filename = file.filename
-        file.save(os.path.join(".", filename))
+        file.save(os.path.join(".temp", filename)) # type: ignore
+    
 
     return error_response(501, "ImplementationError", "Not Fully Implemented")
 

@@ -1,7 +1,7 @@
 import os
 import json
 
-from flask import Flask, Response, flash, request
+from flask import Flask, Response, flash, request, send_file
 from receipt import Receipt
 from storage_hooks import AWSHook
 
@@ -21,14 +21,16 @@ def upload_receipt():
     file = request.files["file"]
 
     if file.filename == "":
-        return error_response(400, "Missing Filename", "The file has been sent but with no filename.")
+        return error_response(
+            400, "Missing Filename", "The file has been sent but with no filename."
+        )
         pass
 
     if file:
         filename = file.filename
 
         # Read all bytes from file and join them into a single list
-        im_bytes = b''.join(file.stream.readlines())
+        im_bytes = b"".join(file.stream.readlines())
         file.close()
 
         aws = AWSHook()
@@ -37,6 +39,13 @@ def upload_receipt():
     return error_response(400, "Missing File", "No file has been sent.")
 
 
-@app.route("/api/receipt/view")
-def view_receipt():
-    return error_response(501, "ImplementationError", "Not Fully Implemented")
+@app.route("/api/receipt/view/<file_key>")
+def view_receipt(file_key: str):
+    aws = AWSHook()
+    receipt = aws.fetch_receipt(file_key)
+    file_path = os.path.join(".temp", file_key)
+
+    with open(f"{file_path}", "wb") as file:
+        file.write(receipt.ph_body)
+
+    return send_file(file_path)

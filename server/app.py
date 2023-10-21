@@ -1,3 +1,4 @@
+import mimetypes
 import os
 import json
 
@@ -11,6 +12,10 @@ app = Flask(__name__)
 def error_response(status: int, error_name: str, error_message: str) -> Response:
     res_json = {"error_name": error_name, "error_message": error_message}
     return Response(json.dumps(res_json), status=status, mimetype="application/json")
+
+
+def response_code(status: int) -> Response:
+    return Response("", status=status, mimetype="application/json")
 
 
 @app.route("/api/receipt/upload", methods=["POST"])
@@ -49,3 +54,11 @@ def view_receipt(file_key: str):
         file.write(receipt.ph_body)
 
     return send_file(file_path)
+
+
+@app.route("/api/receipt/delete/<file_key>")
+def delete_receipt(file_key: str):
+    aws = AWSHook()
+    aws.delete_receipt_by_id(file_key)
+
+    return response_code(200)

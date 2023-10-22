@@ -1,4 +1,3 @@
-import mimetypes
 import os
 import json
 
@@ -40,8 +39,8 @@ def upload_receipt():
 
         aws = AWSHook()
         aws.upload_receipt(Receipt(filename, im_bytes))
-
-    return error_response(400, "Missing File", "No file has been sent.")
+    else:
+        return error_response(400, "Missing File", "No file has been sent.")
 
 
 @app.route("/api/receipt/view/<file_key>")

@@ -39,6 +39,7 @@ def upload_receipt():
 
         aws = AWSHook()
         aws.upload_receipt(Receipt(filename, im_bytes))
+        return response_code(200)
     else:
         return error_response(400, "Missing File", "No file has been sent.")
 

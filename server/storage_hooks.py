@@ -1,6 +1,9 @@
 import abc
 import datetime as dt
 import enum
+import warnings
+
+import botocore.exceptions
 
 from receipt import Receipt
 
@@ -195,3 +198,28 @@ class AWSHook(StorageHook):
     def delete_receipt(self, receipt) -> bool:
         r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.ph_key)
         return r["ResponseMetadata"]["HTTPStatusCode"] == 204
+
+    @property
+    def storage_version(self) -> str:
+        """Return scheme version the database is using."""
+        return "0.1.0"
+
+    def initialize_storage(self):
+        """Initialize storage / database with current scheme."""
+        try:
+            _r = self.client.create_bucket(Bucket=self.bucket_name)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "BucketAlreadyExists":
+                raise ValueError(f"Bucket {self.bucket_name} Already Exists")
+            elif e.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
+                warnings.warn(f"You already own Bucket {self.bucket_name}")
+            else:
+                raise
+
+    def update_storage(self) -> bool:
+        """Migrates a copy of the database to the current scheme version.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        return True

@@ -5,19 +5,18 @@ CURRENT_VERSION = "0.1.0-1.0"
 
 
 def make_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("Receipt Database Setup")
+    parser = argparse.ArgumentParser("Receipt Database Configuration")
+    subparsers = parser.add_subparsers(dest="cmd")
 
     # Options to initialize a new database
-    initialize = parser.add_subparsers(help="Initialize a new database.").add_parser(
-        "initialize"
-    )
-    initialize.add_argument("service", choices=["SQLite3", "AWS"], required=True)
+    initialize = subparsers.add_parser("initialize", help="Initialize a new database.")
+    initialize.add_argument("service", choices=["SQLite3", "AWS"])
 
     # Options to migrate services or versions
-    migration = parser.add_subparsers(
-        help="Migrate database to different service or version."
-    ).add_parser("migrate")
-    initialize.add_argument("service", choices=["SQLite3", "AWS"], required=True)
+    migration = subparsers.add_parser(
+        "migrate", help="Migrate database to different service or version."
+    )
+    migration.add_argument("service", choices=["SQLite3", "AWS"])
 
     return parser
 

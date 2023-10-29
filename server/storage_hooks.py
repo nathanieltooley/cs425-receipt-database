@@ -86,7 +86,7 @@ class StorageHook(abc.ABC):
             receipt: The receipt to edit.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         pass
 
@@ -98,7 +98,7 @@ class StorageHook(abc.ABC):
             receipt: The receipt to delete.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         pass
 
@@ -109,7 +109,7 @@ class StorageHook(abc.ABC):
             identifier: The identifier of the receipt to delete.
 
         Returns:
-            object: True if successful, False otherwise.
+            True if successful, False otherwise.
         """
         receipt = self.fetch_receipt(identifier)
         return self.delete_receipt(receipt)
@@ -141,3 +141,53 @@ class StorageHook(abc.ABC):
             True if successful, False otherwise.
         """
         pass
+
+
+class AWSHook(StorageHook):
+    """Connection to AWS Storage"""
+
+    def __init__(self):
+        import boto3
+
+        super().__init__()
+        self.client = boto3.client("s3")
+        self.bucket_name = "cs425-3-test-bucket"
+
+    def upload_receipt(self, receipt: Receipt) -> bool:
+        r = self.client.put_object(
+            Bucket=self.bucket_name, Key=receipt.ph_key, Body=receipt.ph_body
+        )
+        return r == 200
+
+    def fetch_receipt(self, identifier) -> Receipt:
+        try:
+            data = (
+                self.client.get_object(Bucket=self.bucket_name, Key=identifier)
+                .get("Body")
+                .read()
+            )
+            # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
+            return Receipt(identifier, data)
+        except AttributeError:
+            raise ValueError
+
+    def fetch_receipts(
+        self, limit: int = None, sort: Sort = Sort.newest
+    ) -> list[Receipt]:
+        pass
+
+    def fetch_receipts_between(
+        self,
+        after: dt.datetime,
+        before: dt.datetime,
+        limit: int = None,
+        sort: Sort = Sort.newest,
+    ) -> list[Receipt]:
+        pass
+
+    def edit_receipt(self, receipt: Receipt) -> bool:
+        return self.upload_receipt(receipt)
+
+    def delete_receipt(self, receipt) -> bool:
+        r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.ph_key)
+        return r["ResponseMetadata"]["HTTPStatusCode"] == 204

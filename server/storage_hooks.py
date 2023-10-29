@@ -134,6 +134,10 @@ class StorageHook(abc.ABC):
         """Return scheme version the database is using."""
 
     @abc.abstractmethod
+    def initialize_storage(self):
+        """Initialize storage / database with current scheme."""
+
+    @abc.abstractmethod
     def update_storage(self) -> bool:
         """Migrates a copy of the database to the current scheme version.
 

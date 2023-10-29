@@ -3,7 +3,7 @@ import json
 
 from flask import Flask, Response, flash, request, send_file
 from receipt import Receipt
-from storage_hooks import AWSHook
+from storage_hooks.AWS import AWSHook
 
 app = Flask(__name__)
 

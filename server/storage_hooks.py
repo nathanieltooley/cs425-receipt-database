@@ -155,6 +155,7 @@ class AWSHook(StorageHook):
 
         super().__init__()
         self.client = boto3.client("s3")
+        # ToDo: Configurable Bucket Name
         self.bucket_name = "cs425-3-test-bucket"
 
     def upload_receipt(self, receipt: Receipt) -> bool:

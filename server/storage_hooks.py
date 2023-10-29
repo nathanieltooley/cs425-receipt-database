@@ -1,9 +1,6 @@
 import abc
 import datetime as dt
 import enum
-import warnings
-
-import botocore.exceptions
 
 from receipt import Receipt
 
@@ -206,6 +203,9 @@ class AWSHook(StorageHook):
 
     def initialize_storage(self):
         """Initialize storage / database with current scheme."""
+        import warnings
+        import botocore.exceptions
+
         try:
             _r = self.client.create_bucket(Bucket=self.bucket_name)
         except botocore.exceptions.ClientError as e:

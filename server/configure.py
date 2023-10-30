@@ -1,4 +1,5 @@
 import argparse
+import importlib
 
 
 CURRENT_VERSION = "0.1.0-1.0"
@@ -24,6 +25,14 @@ def make_parser() -> argparse.ArgumentParser:
 def main():
     parser = make_parser()
     args = parser.parse_args()
+    print(args)
+    match args.cmd:
+        case "initialize":
+            module = importlib.import_module(f"storage_hooks.{args.service}")
+            print(module)
+            module.init_script()
+        case "migrate":
+            pass
     pass
 
 

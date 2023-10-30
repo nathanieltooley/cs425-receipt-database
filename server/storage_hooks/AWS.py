@@ -9,6 +9,8 @@ from storage_hooks.storage_hooks import StorageHook, Sort
 
 
 def init_script():
+    """Script to initialize AWSHook."""
+    # ToDo: Configure AWS Hook locally. I.e. use a `botocore.config.Config`
     hook = AWSHook()
     hook.initialize_storage()
 

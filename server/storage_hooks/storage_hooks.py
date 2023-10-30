@@ -128,8 +128,8 @@ class StorageHook(abc.ABC):
                 return False
         return True
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def storage_version(self) -> str:
         """Return scheme version the database is using."""
 

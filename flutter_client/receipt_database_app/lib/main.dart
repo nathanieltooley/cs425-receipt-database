@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import '/api.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,18 +37,53 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
 
+    String _filePath = '';
+
+    // Allows user to pick a file to upload
+    void _pickAndUploadFile() async {
+      String? filePath = await FilePicker.platform.pickFiles().then((result) {
+        if (result != null) {
+          return result.files.single.path;
+        } else {
+          return null;
+        }
+      });
+
+      if (filePath != null) {
+        setState(() {
+          _filePath = filePath;
+        });
+
+        try {
+          await Api.uploadFile(_filePath);
+          print('File uploaded successfully');
+        } catch (e) {
+          print('Error uploading file: $e');
+        }
+      } else {
+        print('No file selected');
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
 
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // Upload receipts
-          },
-          child: Text('Upload Receipt'),
-        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            ElevatedButton(
+              onPressed: _pickAndUploadFile,
+              child: Text('Upload Receipt'),
+            ),
+            SizedBox(height: 20),
+            _filePath.isNotEmpty
+              ? Text('Selected File: $_filePath')
+              : Container(),
+          ]
+        )
       ),
     );
   }

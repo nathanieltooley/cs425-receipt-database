@@ -8,6 +8,11 @@ from receipt import Receipt
 from storage_hooks.storage_hooks import StorageHook, Sort
 
 
+def init_script():
+    hook = AWSHook()
+    hook.initialize_storage()
+
+
 class AWSHook(StorageHook):
     """Connection to AWS Storage"""
 
@@ -15,7 +20,7 @@ class AWSHook(StorageHook):
         super().__init__()
         self.client = boto3.client("s3")
         # ToDo: Configurable Bucket Name
-        self.bucket_name = "cs425-3-test-bucket2"
+        self.bucket_name = "cs425-3-test-bucket"
 
     def upload_receipt(self, receipt: Receipt) -> bool:
         r = self.client.put_object(

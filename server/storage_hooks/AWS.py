@@ -11,6 +11,10 @@ from storage_hooks.storage_hooks import StorageHook, Sort
 def init_script():
     """Script to initialize AWSHook."""
     # ToDo: Configure AWS Hook locally. I.e. use a `botocore.config.Config`
+    # another option would to be internally set the environment variables boto3 uses
+    import subprocess
+
+    subprocess.run(["aws", "configure"])
     hook = AWSHook()
     hook.initialize_storage()
 

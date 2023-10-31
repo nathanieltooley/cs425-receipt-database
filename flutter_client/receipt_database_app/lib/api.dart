@@ -10,15 +10,12 @@ class Api {
     try {
       Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/upload');
       var request = http.MultipartRequest('POST', uri);
-      print("1");
 
       // Attach the file
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
-      print("2");
       
       // Send the request
       var response = await request.send();
-      print("3");
 
       // Check the response
       if (response.statusCode == 200) {

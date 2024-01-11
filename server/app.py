@@ -1,24 +1,46 @@
 import os
 import json
+import tempfile
+from flask_cors import CORS
 
 from flask import Flask, Response, flash, request, send_file
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook
 
 app = Flask(__name__)
+CORS(app)
 
 
 def error_response(status: int, error_name: str, error_message: str) -> Response:
+    """Create and return a Flask Response object that contains error information
+
+    Args:
+        status: HTML Status code to send with the response
+        error_name: Name of the error
+        error_message: Message to go along with the error
+
+    Returns:
+        Response
+    """
     res_json = {"error_name": error_name, "error_message": error_message}
     return Response(json.dumps(res_json), status=status, mimetype="application/json")
 
 
 def response_code(status: int) -> Response:
+    """Create an empty response with a status code
+
+    Args:
+        status: HTML Status code
+
+    Returns:
+        Response
+    """
     return Response("", status=status, mimetype="application/json")
 
 
 @app.route("/api/receipt/upload", methods=["POST"])
 def upload_receipt():
+    """API Endpoint for uploading a receipt image"""
     if "file" not in request.files:
         return error_response(400, "Missing Key", "The file has not been specified.")
 
@@ -46,18 +68,33 @@ def upload_receipt():
 
 @app.route("/api/receipt/view/<file_key>")
 def view_receipt(file_key: str):
+    """API Endpoint for viewing a receipt
+
+    This endpoint returns the bytes of the image to the caller
+
+    Args:
+        file_key: The AWS file name to view
+    """
     aws = AWSHook()
     receipt = aws.fetch_receipt(file_key)
-    file_path = os.path.join(".temp", file_key)
-
-    with open(f"{file_path}", "wb") as file:
-        file.write(receipt.ph_body)
-
-    return send_file(file_path)
+    # NamedTemporaryFile will automatically delete itself on file close (by default)
+    # Additionally, exiting a context manager can be simulated by calling __exit__()
+    # It may make sense to eventually move this to aws.fetch_receipt or Receipt
+    file = tempfile.NamedTemporaryFile(suffix=file_key)
+    file.write(receipt.ph_body)
+    file.flush()  # Ensure data is properly written before trying to send it
+    # logger.debug(f"Using tempfile {file.name}")
+    return send_file(file.name, download_name=file_key)
 
 
 @app.route("/api/receipt/delete/<file_key>")
 def delete_receipt(file_key: str):
+    """Deletes a receipt in the AWS bucket
+
+    Args:
+        file_key: The AWS file name to delete
+
+    """
     aws = AWSHook()
     aws.delete_receipt_by_id(file_key)
 

@@ -6,6 +6,7 @@ black ~= 23.9.1
 
 # Flask
 flask ~= 3.0.0
+flask-cors ~= 4.0.0
 
 # Directories
 platformdirs ~= 4.1.0

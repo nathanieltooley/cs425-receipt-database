@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  connectivity: ^3.0.6
+  http: ^0.13.3
+  file_picker: ^4.0.0
   flutter:
     sdk: flutter
 

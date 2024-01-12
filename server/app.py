@@ -1,11 +1,14 @@
 import os
 import json
 import tempfile
+from typing import Optional, cast
+import botocore.exceptions
 from flask_cors import CORS
 
 from flask import Flask, Response, flash, request, send_file
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -76,15 +79,25 @@ def view_receipt(file_key: str):
         file_key: The AWS file name to view
     """
     aws = AWSHook()
-    receipt = aws.fetch_receipt(file_key)
-    # NamedTemporaryFile will automatically delete itself on file close (by default)
-    # Additionally, exiting a context manager can be simulated by calling __exit__()
-    # It may make sense to eventually move this to aws.fetch_receipt or Receipt
-    file = tempfile.NamedTemporaryFile(suffix=file_key)
-    file.write(receipt.ph_body)
-    file.flush()  # Ensure data is properly written before trying to send it
-    # logger.debug(f"Using tempfile {file.name}")
-    return send_file(file.name, download_name=file_key)
+    receipt: Optional[Receipt] = None
+
+    try:
+        receipt = aws.fetch_receipt(file_key)
+    except botocore.exceptions.ClientError as error:
+        if error.response["Error"]["Code"] == "NoSuchKey":
+            return error_response(
+                400,
+                "No such key",
+                f"The key, {file_key}, was not found in the database",
+            )
+
+    # If we made it this far, receipt can not be None so we should be able to safely type cast
+    receipt = cast(Receipt, receipt)
+
+    # Convert receipt image into BytesIO object
+    r_bytes = BytesIO(receipt.ph_body)
+
+    return send_file(r_bytes, download_name=file_key)
 
 
 @app.route("/api/receipt/delete/<file_key>")

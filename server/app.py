@@ -6,6 +6,7 @@ from flask_cors import CORS
 from flask import Flask, Response, flash, request, send_file
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -77,14 +78,9 @@ def view_receipt(file_key: str):
     """
     aws = AWSHook()
     receipt = aws.fetch_receipt(file_key)
-    # NamedTemporaryFile will automatically delete itself on file close (by default)
-    # Additionally, exiting a context manager can be simulated by calling __exit__()
-    # It may make sense to eventually move this to aws.fetch_receipt or Receipt
-    file = tempfile.NamedTemporaryFile(suffix=file_key)
-    file.write(receipt.ph_body)
-    file.flush()  # Ensure data is properly written before trying to send it
-    # logger.debug(f"Using tempfile {file.name}")
-    return send_file(file.name, download_name=file_key)
+
+    r_bytes = BytesIO(receipt.ph_body)
+    return send_file(r_bytes, download_name=file_key)
 
 
 @app.route("/api/receipt/delete/<file_key>")

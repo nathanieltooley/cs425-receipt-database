@@ -1,6 +1,8 @@
 import os
 import json
 import tempfile
+from typing import Optional, cast
+import botocore.exceptions
 from flask_cors import CORS
 
 from flask import Flask, Response, flash, request, send_file
@@ -77,7 +79,20 @@ def view_receipt(file_key: str):
         file_key: The AWS file name to view
     """
     aws = AWSHook()
-    receipt = aws.fetch_receipt(file_key)
+    receipt: Optional[Receipt] = None
+
+    try:
+        receipt = aws.fetch_receipt(file_key)
+    except botocore.exceptions.ClientError as error:
+        if error.response["Error"]["Code"] == "NoSuchKey":
+            return error_response(
+                400,
+                "No such key",
+                f"The key, {file_key}, was not found in the database",
+            )
+
+    # If we made it this far, receipt can not be None so we should be able to safely type cast
+    receipt = cast(Receipt, receipt)
 
     # Convert receipt image into BytesIO object
     r_bytes = BytesIO(receipt.ph_body)

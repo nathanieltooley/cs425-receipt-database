@@ -79,7 +79,9 @@ def view_receipt(file_key: str):
     aws = AWSHook()
     receipt = aws.fetch_receipt(file_key)
 
+    # Convert receipt image into BytesIO object
     r_bytes = BytesIO(receipt.ph_body)
+
     return send_file(r_bytes, download_name=file_key)
 
 

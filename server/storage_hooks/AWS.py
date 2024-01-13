@@ -30,19 +30,22 @@ class AWSHook(StorageHook):
 
     def upload_receipt(self, receipt: Receipt) -> bool:
         r = self.client.put_object(
-            Bucket=self.bucket_name, Key=receipt.ph_key, Body=receipt.ph_body
+            Bucket=self.bucket_name,
+            Key=receipt.key,
+            Body=receipt.body,
+            Metadata={"upload_date": receipt.upload_dt.isoformat(timespec="seconds")},
         )
         return r == 200
 
     def fetch_receipt(self, identifier) -> Receipt:
         try:
-            data = (
-                self.client.get_object(Bucket=self.bucket_name, Key=identifier)
-                .get("Body")
-                .read()
+            obj = self.client.get_object(Bucket=self.bucket_name, Key=identifier)
+            data = obj.get("Body").read()
+            upload_dt = dt.datetime.fromisoformat(
+                obj.get("Metadata").get("upload_date")
             )
             # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
-            return Receipt(identifier, data)
+            return Receipt(identifier, data, upload_dt=upload_dt)
         except AttributeError:
             raise ValueError
 
@@ -64,7 +67,7 @@ class AWSHook(StorageHook):
         return self.upload_receipt(receipt)
 
     def delete_receipt(self, receipt) -> bool:
-        r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.ph_key)
+        r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.key)
         return r["ResponseMetadata"]["HTTPStatusCode"] == 204
 
     @property

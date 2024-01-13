@@ -6,6 +6,7 @@ import botocore.exceptions
 from flask_cors import CORS
 
 from flask import Flask, Response, flash, request, send_file
+from werkzeug.datastructures import Headers
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook
 from io import BytesIO
@@ -57,6 +58,7 @@ def upload_receipt():
 
     if file:
         filename = file.filename
+        filename = cast(str, filename)
 
         # Read all bytes from file and join them into a single list
         im_bytes = b"".join(file.stream.readlines())
@@ -95,9 +97,11 @@ def view_receipt(file_key: str):
     receipt = cast(Receipt, receipt)
 
     # Convert receipt image into BytesIO object
-    r_bytes = BytesIO(receipt.ph_body)
+    r_bytes = BytesIO(receipt.body)
 
-    return send_file(r_bytes, download_name=file_key)
+    file = send_file(r_bytes, download_name=file_key)
+    file.headers["Upload-Date"] = str(receipt.upload_dt)
+    return file
 
 
 @app.route("/api/receipt/delete/<file_key>")

@@ -1,39 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:receipt_database_app/pages/initial_page.dart';
 import 'package:file_picker/file_picker.dart';
-import '/api.dart';
+import '/components/api.dart';
 
-void main() {
-  runApp(const MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Receipt Database',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Receipt Database Homepage'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class DatabasePage extends StatefulWidget {
+  const DatabasePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<DatabasePage> createState() => _DatabasePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _DatabasePageState extends State<DatabasePage> {
   String _filePath = '';
 
   // Allows user to pick a file to upload
@@ -101,4 +80,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-

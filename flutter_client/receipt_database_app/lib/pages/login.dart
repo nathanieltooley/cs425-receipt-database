@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 import "package:flutter/material.dart";
-import "package:receipt_database_app/pages/acct.dart";
+import "package:receipt_database_app/components/page_transitions.dart";
+import "package:receipt_database_app/pages/database_page.dart";
 
 class LoginState extends StatefulWidget {
   const LoginState({super.key});
@@ -18,12 +19,25 @@ class _LoginStateState extends State<LoginState> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.blue,
+    return SafeArea(
+        child: Scaffold(
+      backgroundColor: const Color.fromARGB(255, 174, 201, 214),
+
+      appBar: AppBar(        
+      backgroundColor: const Color.fromARGB(255, 174, 201, 214),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          Icon(Icons.add_road_sharp),
+        children: [
+          SizedBox(
+            height: 50,
+          ),
           Form(
             key: _formkey,
             child: Column(
@@ -56,19 +70,9 @@ class _LoginStateState extends State<LoginState> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter some text';
                       }
+                        //TALK TO SERVER TO CHECK IF CORRECT.
                       return null;
                     },
-                    /*
-                    RequiredValidator( 
-                        errorText: 'Please enter Password'), 
-                    MinLengthValidator(8, 
-                        errorText: 
-                            'Password must be atlist 8 digit'), 
-                    PatternValidator(r'(?=.*?[#!@$%^&*-])', 
-                        errorText: 
-                            'Password must be atlist one special character') 
-                     ]), 
-                      */
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: "Password",
@@ -84,7 +88,17 @@ class _LoginStateState extends State<LoginState> {
                   child: ElevatedButton(
                       onPressed: () {
                         if (_formkey.currentState!.validate()) {
-                          print('form submiitted'); 
+                          print('form submiitted');
+                          //THIS IS WHERE I WOULD CALL BACKEND THEN SEND TO NEXT PAGE.
+                          Navigator.push(
+                    context,
+                    customPageRoute(
+                      page: const DatabasePage(title: "Main Ting", ),
+                      beginOffset: const Offset(1.0, 0.0),
+                      endOffset: Offset.zero,
+                      curve: Curves.easeInOut,
+                    ),
+                  );
                         }
                       },
                       style: ButtonStyle(
@@ -106,36 +120,8 @@ class _LoginStateState extends State<LoginState> {
               ],
             ),
           ),
-
-
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyAccountSetup()),
-  );
-              },
-              style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(Colors.red),
-                  minimumSize: MaterialStateProperty.all(Size(225, 40)),
-                  elevation: MaterialStateProperty.all(5),
-                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18.0),
-                  ))),
-              child: Text(
-                "Create Account",
-                style: TextStyle(
-                    fontFamily: 'Aleo',
-                    fontStyle: FontStyle.normal,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25.0,
-                    color: Colors.white),
-              ),
-            ),
-          )
         ],
       ),
-    );
+    ));
   }
 }

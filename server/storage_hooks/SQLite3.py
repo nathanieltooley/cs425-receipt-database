@@ -17,7 +17,7 @@ DEFAULT_SETTINGS = {
     "table_images": "Image",
     "table_items": "Item",
     "table_tags": "Tags",
-    "table_receipt_tags": "ReceiptTags"
+    "table_receipt_tags": "ReceiptTags",
 }
 
 
@@ -91,9 +91,9 @@ def get_sort_meaning(sort: Sort | None) -> str:
         case None:
             return ""
         case Sort.newest:
-            return f"{order_by} ph_key {descending}"
+            return f"{order_by} key {descending}"
         case Sort.oldest:
-            return f"{order_by} ph_key {ascending}"
+            return f"{order_by} key {ascending}"
         case _:
             raise ValueError
 
@@ -173,9 +173,9 @@ class SQLite3(StorageHook):
 
     def upload_receipt(self, receipt: Receipt) -> bool:
         self.connection.execute(
-            f"INSERT OR REPLACE INTO {self.config.table_receipts} (ph_key, ph_body) "
+            f"INSERT OR REPLACE INTO {self.config.table_receipts} (key, body) "
             f"VALUES (?, ?)",
-            [receipt.ph_key, receipt.ph_body],
+            [receipt.key, receipt.body],
         ).close()  # Closes the implicit cursor
         self.connection.commit()
         return True
@@ -183,7 +183,7 @@ class SQLite3(StorageHook):
     def fetch_receipt(self, identifier) -> Receipt:
         with self.cursor() as cursor:
             cursor.execute(
-                f"SELECT ph_body FROM {self.config.table_receipts} WHERE ph_key == ?",
+                f"SELECT body FROM {self.config.table_receipts} WHERE key == ?",
                 [identifier],
             )
             return Receipt(identifier, *cursor.fetchone())
@@ -195,17 +195,19 @@ class SQLite3(StorageHook):
         with self.cursor() as cursor:
             if limit:
                 cursor.execute(
-                    f"SELECT ph_key, ph_body FROM {self.config.table_receipts} "
+                    f"SELECT key, body, upload_dt FROM {self.config.table_receipts} "
                     f"{get_sort_meaning(sort)} LIMIT ?",
                     [limit],
                 )
             else:
                 cursor.execute(
-                    f"SELECT ph_key, ph_body FROM {self.config.table_receipts} "
+                    f"SELECT key, body, upload_dt FROM {self.config.table_receipts} "
                     f"{get_sort_meaning(sort)}"
                 )
             for row in cursor:
-                receipts.append(Receipt(*row))
+                receipts.append(
+                    Receipt(row[0], row[1], dt.datetime.fromisoformat(row[2]))
+                )
         return receipts
 
     def fetch_receipts_between(
@@ -222,9 +224,7 @@ class SQLite3(StorageHook):
 
     def delete_receipt(self, receipt) -> bool:
         with self.cursor() as cursor:
-            cursor.execute(
-                f"DELETE FROM {self.config.table_receipts} WHERE ph_key == ?"
-            )
+            cursor.execute(f"DELETE FROM {self.config.table_receipts} WHERE key == ?")
         return True
 
     @property
@@ -248,8 +248,9 @@ class SQLite3(StorageHook):
             print("Dropped Tables")
             cursor.execute(
                 f"CREATE TABLE {self.config.table_receipts} ("
-                "   ph_key TEXT PRIMARY KEY,"
-                "   ph_body BLOB NOT NULL"
+                "   key TEXT PRIMARY KEY,"
+                "   body BLOB NOT NULL,"
+                "   upload_dt TEXT NOT NULL"
                 ")"
             )
             print("Created Tables")

@@ -95,7 +95,7 @@ def view_receipt(file_key: str):
     receipt = cast(Receipt, receipt)
 
     # Convert receipt image into BytesIO object
-    r_bytes = BytesIO(receipt.ph_body)
+    r_bytes = BytesIO(receipt.body)
 
     return send_file(r_bytes, download_name=file_key)
 

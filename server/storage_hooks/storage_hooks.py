@@ -114,52 +114,34 @@ class StorageHook(abc.ABC):
         receipt = self.fetch_receipt(identifier)
         return self.delete_receipt(receipt)
 
+    def migrate_to_service(self, new_service: "StorageHook") -> bool:
+        """Migrate all currently stored receipts to a new service.
 
-class AWSHook(StorageHook):
-    """Connection to AWS Storage"""
+        Args:
+            new_service: The StorageHook for the service to migrate to.
 
-    def __init__(self):
-        import boto3
+        Returns:
+            True if successful, False otherwise.
+        """
+        for receipt in self.fetch_receipts():
+            if not new_service.upload_receipt(receipt):
+                return False
+        return True
 
-        super().__init__()
-        self.client = boto3.client("s3")
-        self.bucket_name = "cs425-3-test-bucket"
+    @property
+    @abc.abstractmethod
+    def storage_version(self) -> str:
+        """Return scheme version the database is using."""
 
-    def upload_receipt(self, receipt: Receipt) -> bool:
-        r = self.client.put_object(
-            Bucket=self.bucket_name, Key=receipt.ph_key, Body=receipt.ph_body
-        )
-        return r == 200
+    @abc.abstractmethod
+    def initialize_storage(self):
+        """Initialize storage / database with current scheme."""
 
-    def fetch_receipt(self, identifier) -> Receipt:
-        try:
-            data = (
-                self.client.get_object(Bucket=self.bucket_name, Key=identifier)
-                .get("Body")
-                .read()
-            )
-            # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
-            return Receipt(identifier, data)
-        except AttributeError:
-            raise ValueError
+    @abc.abstractmethod
+    def update_storage(self) -> bool:
+        """Migrates a copy of the database to the current scheme version.
 
-    def fetch_receipts(
-        self, limit: int = None, sort: Sort = Sort.newest
-    ) -> list[Receipt]:
+        Returns:
+            True if successful, False otherwise.
+        """
         pass
-
-    def fetch_receipts_between(
-        self,
-        after: dt.datetime,
-        before: dt.datetime,
-        limit: int = None,
-        sort: Sort = Sort.newest,
-    ) -> list[Receipt]:
-        pass
-
-    def edit_receipt(self, receipt: Receipt) -> bool:
-        return self.upload_receipt(receipt)
-
-    def delete_receipt(self, receipt) -> bool:
-        r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.ph_key)
-        return r["ResponseMetadata"]["HTTPStatusCode"] == 204

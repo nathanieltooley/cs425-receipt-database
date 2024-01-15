@@ -1,4 +1,11 @@
+import dataclasses as dc
+import datetime as dt
+
+
+@dc.dataclass
 class Receipt:
-    def __init__(self, ph_key, ph_body):
-        self.ph_key = ph_key
-        self.ph_body = ph_body
+    key: str
+    body: bytes
+    upload_dt: dt.datetime = dc.field(
+        default_factory=lambda: dt.datetime.now().astimezone()
+    )

@@ -1,7 +1,7 @@
 // api.dart
-import 'dart:convert';
+//import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:connectivity/connectivity.dart';
+//import 'package:connectivity/connectivity.dart';
 
 
 class Api {
@@ -24,7 +24,7 @@ class Api {
         print('Failed to upload file. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error uploading file: $e');
+        print('Error uploading file: $e');
     }
   }
 }

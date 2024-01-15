@@ -104,6 +104,21 @@ def view_receipt(file_key: str):
     return file
 
 
+@app.route("/api/receipt/view_many")
+def view_receipts():
+    aws = AWSHook()
+    receipts = aws.fetch_receipts()
+
+    response = {"results": []}
+
+    for r in receipts:
+        response["results"].append(
+            {"key": r.key, "metadata": {"upload_dt": str(r.upload_dt)}}
+        )
+
+    return Response(json.dumps(response), 200)
+
+
 @app.route("/api/receipt/delete/<file_key>")
 def delete_receipt(file_key: str):
     """Deletes a receipt in the AWS bucket

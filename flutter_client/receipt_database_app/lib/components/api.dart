@@ -19,12 +19,12 @@ class Api {
 
       // Check the response
       if (response.statusCode == 200) {
-        //print('File uploaded successfully');
+        print('File uploaded successfully');
       } else {
-        //print('Failed to upload file. Status code: ${response.statusCode}');
+        print('Failed to upload file. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      //print('Error uploading file: $e');
+        print('Error uploading file: $e');
     }
   }
 }

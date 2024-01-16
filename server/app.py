@@ -1,8 +1,8 @@
 import json
-from typing import Optional, cast
 import botocore.exceptions
-from flask_cors import CORS
 
+from typing import Optional, cast
+from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook

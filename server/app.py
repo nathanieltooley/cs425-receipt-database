@@ -104,8 +104,8 @@ def view_receipt(file_key: str):
     return file
 
 
-@app.route("/api/receipt/view_many")
-def view_receipts():
+@app.route("/api/receipt/fetch_many_keys")
+def fetch_receipt_keys():
     aws = AWSHook()
     receipts = aws.fetch_receipts()
 

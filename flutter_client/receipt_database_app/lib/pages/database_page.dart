@@ -2,6 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '/components/api.dart';
 
+  // Display support for receipts
+  class MyListView extends StatefulWidget {
+    const MyListView({super.key});
+
+    @override
+    _MyListViewState createState() => _MyListViewState();
+  }
+  class _MyListViewState extends State<MyListView> {
+    List<String> items = ["test", "two", "three"];
+
+    @override
+    Widget build(BuildContext context) {
+      return ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return Card(
+            elevation: 5,
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(items[index]),
+              onTap: () {
+                //Can send to a full page of receipt if we want to.
+              },
+            ),
+          );
+        },
+      );
+    }
+  }
 
 class DatabasePage extends StatefulWidget {
   const DatabasePage({super.key, required this.title});
@@ -65,16 +94,19 @@ class _DatabasePageState extends State<DatabasePage> {
         ],
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          ElevatedButton(
-            onPressed: _pickAndUploadFile,
-            child: Text('Upload Receipt'),
+              ElevatedButton(
+                onPressed: _pickAndUploadFile,
+                child: Text('Upload Receipt'),
+              ),
+              SizedBox(height: 20),
+              _filePath.isNotEmpty
+                  ? Text('File Uploaded Successfully')
+                  : Container(),
+          Expanded(
+            child: MyListView(),
           ),
-          SizedBox(height: 20),
-          _filePath.isNotEmpty
-              ? Text('File Uploaded Successfully')
-              : Container(),
         ],
       ),
     );

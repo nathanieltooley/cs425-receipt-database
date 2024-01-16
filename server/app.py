@@ -1,12 +1,9 @@
-import os
 import json
-import tempfile
 from typing import Optional, cast
 import botocore.exceptions
 from flask_cors import CORS
 
-from flask import Flask, Response, flash, request, send_file
-from werkzeug.datastructures import Headers
+from flask import Flask, Response, request, send_file
 from receipt import Receipt
 from storage_hooks.AWS import AWSHook
 from io import BytesIO

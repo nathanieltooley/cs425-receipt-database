@@ -1,5 +1,7 @@
 // api.dart
 //import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 //import 'package:connectivity/connectivity.dart';
 
@@ -25,6 +27,49 @@ class Api {
       }
     } catch (e) {
         print('Error uploading file: $e');
+    }
+  }
+
+  Future<Uint8List> fetchReceiptData(String fileKey) async {
+    final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view/$fileKey'));
+
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Failed to load receipt');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view_many'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> results = json.decode(response.body)['results'];
+        
+        // Fetch details for each key and create a map
+        final List<Map<String, dynamic>> receiptDataList = [];
+        for (final result in results) {
+          final String fileKey = result['key'];
+          final Uint8List imageData = await fetchReceiptData(fileKey);
+
+          // Create a map for the receipt data
+          final Map<String, dynamic> receiptData = {
+            'title': fileKey, 
+            'imageData': imageData,
+            'imageUrl': 'placeholder_url', // placeholder
+          };
+
+          // Add the receiptData map to receiptDataList
+          receiptDataList.add(receiptData);
+        }
+
+        return receiptDataList;
+      } else {
+        throw Exception('Failed to load many receipts. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching many receipts: $e');
     }
   }
 }

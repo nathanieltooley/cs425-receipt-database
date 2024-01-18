@@ -91,28 +91,28 @@ class AWSHook(StorageHook):
     def initialize_storage(self):
         """Initialize storage / database with current scheme."""
 
-        try:
-            _r = self.client.create_bucket(Bucket=self.bucket_name)
-        except botocore.exceptions.ClientError as e:
-            match e.response["Error"]["Code"]:
-                case "BucketAlreadyExists":
-                    raise ValueError(f"Bucket {self.bucket_name} Already Exists")
-                case "BucketAlreadyOwnedByYou":
-                    warnings.warn(f"You already own Bucket {self.bucket_name}")
-                case e_ec if e_ec in [
-                    "IllegalLocationConstraintException",
-                    "InvalidLocationConstraint",
-                ]:
-                    # This case seems undocumented
-                    # When client on us-east-1 and bucket.name = "cs425-3-test-bucket",
-                    # it raises IllegalLocationConstraintException, even if given a
-                    # CreateBucketConfiguration={"LocationConstraint": <region>}.
-                    # When client on us-east-1 and bucket.name = "cs425-3-test-bucket2",
-                    # it raises InvalidLocationConstraint when only when given a
-                    # CreateBucketConfiguration={"LocationConstraint": <region>}.
-                    raise
-                case _:
-                    raise
+        # try:
+        _r = self.client.create_bucket(Bucket=self.bucket_name)
+        # except botocore.exceptions.ClientError as e:
+        #     match e.response["Error"]["Code"]:
+        #         case "BucketAlreadyExists":
+        #             raise ValueError(f"Bucket {self.bucket_name} Already Exists")
+        #         case "BucketAlreadyOwnedByYou":
+        #             warnings.warn(f"You already own Bucket {self.bucket_name}")
+        #         case e_ec if e_ec in [
+        #             "IllegalLocationConstraintException",
+        #             "InvalidLocationConstraint",
+        #         ]:
+        #             # This case seems undocumented
+        #             # When client on us-east-1 and bucket.name = "cs425-3-test-bucket",
+        #             # it raises IllegalLocationConstraintException, even if given a
+        #             # CreateBucketConfiguration={"LocationConstraint": <region>}.
+        #             # When client on us-east-1 and bucket.name = "cs425-3-test-bucket2",
+        #             # it raises InvalidLocationConstraint when only when given a
+        #             # CreateBucketConfiguration={"LocationConstraint": <region>}.
+        #             raise
+        #         case _:
+        #             raise
 
     def update_storage(self) -> bool:
         """Migrates a copy of the database to the current scheme version.

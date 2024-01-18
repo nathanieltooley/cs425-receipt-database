@@ -40,19 +40,32 @@ class AWSHook(StorageHook):
     def fetch_receipt(self, identifier) -> Receipt:
         try:
             obj = self.client.get_object(Bucket=self.bucket_name, Key=identifier)
-            data = obj.get("Body").read()
-            upload_dt = dt.datetime.fromisoformat(
-                obj.get("Metadata").get("upload_date")
-            )
             # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
-            return Receipt(identifier, data, upload_dt=upload_dt)
+            data = obj.get("Body").read()
+            try:
+                upload_dt = dt.datetime.fromisoformat(
+                    obj.get("Metadata").get("upload_date")
+                )
+                return Receipt(identifier, data, upload_dt=upload_dt)
+            except (TypeError, ValueError):
+                # ToDo: This is for testing purposes,
+                #  this should be removed once bucket items all have the same metadata
+                return Receipt(identifier, data)
         except AttributeError:
             raise ValueError
 
     def fetch_receipts(
         self, limit: int = None, sort: Sort = Sort.newest
     ) -> list[Receipt]:
-        pass
+        max_keys = limit or 1000  # Amazon's default
+        response = self.client.list_objects_v2(
+            Bucket=self.bucket_name, MaxKeys=max_keys
+        )
+        receipts = []
+        for receipt_meta in response.get("Contents"):
+            receipts.append(self.fetch_receipt(receipt_meta.get("Key")))
+        # ToDo: Sort
+        return receipts
 
     def fetch_receipts_between(
         self,

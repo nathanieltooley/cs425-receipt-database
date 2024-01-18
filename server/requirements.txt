@@ -1,0 +1,11 @@
+# Amazon S3
+boto3 ~= 1.28.63
+
+# Style Consistency
+black ~= 23.9.1
+
+# Flask
+flask ~= 3.0.0
+
+# Directories
+platformdirs ~= 4.1.0

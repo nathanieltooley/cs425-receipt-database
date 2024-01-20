@@ -2,17 +2,17 @@ import abc
 import datetime as dt
 import enum
 
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, select, asc, desc
 from sqlalchemy.orm import Session
 
 from receipt import Receipt, Base
 
 
-class Sort(enum.Enum):
+class ReceiptSort(enum.Enum):
     """Represents different methods to sort data."""
 
-    newest = enum.auto()  # Newer items before older, a.k.a newest first
-    oldest = enum.auto()  # Older items before newer, a.k.a oldest first
+    newest = desc(Receipt.upload_dt)  # Newer items before older, a.k.a newest first
+    oldest = asc(Receipt.upload_dt)  # Older items before newer, a.k.a oldest first
 
 
 class DatabaseHook(abc.ABC):
@@ -43,7 +43,7 @@ class DatabaseHook(abc.ABC):
             after: dt.datetime,
             before: dt.datetime,
             limit: int = None,
-            sort: Sort = Sort.newest
+            sort: ReceiptSort = ReceiptSort.newest
     ) -> list[Base]:
         stmt = select(Receipt).sort(sort.value)
         if after is not None:
@@ -55,7 +55,6 @@ class DatabaseHook(abc.ABC):
 
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
-
 
 
 class StorageHook(abc.ABC):
@@ -90,7 +89,7 @@ class StorageHook(abc.ABC):
 
     @abc.abstractmethod
     def fetch_receipts(
-        self, limit: int = None, sort: Sort = Sort.newest
+        self, limit: int = None, sort: ReceiptSort = ReceiptSort.newest
     ) -> list[Receipt]:
         """Fetch multiple receipts from storage.
 
@@ -109,7 +108,7 @@ class StorageHook(abc.ABC):
         after: dt.datetime,
         before: dt.datetime,
         limit: int = None,
-        sort: Sort = Sort.newest,
+        sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
         """Fetch receipts dated between `before` and `after` from storage.
 

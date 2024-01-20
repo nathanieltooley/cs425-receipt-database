@@ -2,7 +2,7 @@ import abc
 import datetime as dt
 import enum
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from receipt import Receipt, Base
@@ -32,6 +32,30 @@ class DatabaseHook(abc.ABC):
             for obj in objects:
                 session.delete(obj)
             session.commit()
+
+    def fetch_receipt(self, key: str) -> Receipt:
+        stmt = select(Receipt).where(Receipt.key == key)
+        with Session(self.engine) as session:
+            return session.scalar(stmt)
+
+    def fetch_receipts(
+            self,
+            after: dt.datetime,
+            before: dt.datetime,
+            limit: int = None,
+            sort: Sort = Sort.newest
+    ) -> list[Base]:
+        stmt = select(Receipt).sort(sort.value)
+        if after is not None:
+            stmt = stmt.where(after < Receipt.upload_dt)
+        if before is not None:
+            stmt = stmt.where(before > Receipt.upload_dt)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+
+        with Session(self.engine) as session:
+            return session.scalars(stmt).all()
+
 
 
 class StorageHook(abc.ABC):

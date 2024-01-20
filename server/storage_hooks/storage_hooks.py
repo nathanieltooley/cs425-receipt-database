@@ -2,7 +2,10 @@ import abc
 import datetime as dt
 import enum
 
-from receipt import Receipt
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session
+
+from receipt import Receipt, Base
 
 
 class Sort(enum.Enum):
@@ -10,6 +13,25 @@ class Sort(enum.Enum):
 
     newest = enum.auto()  # Newer items before older, a.k.a newest first
     oldest = enum.auto()  # Older items before newer, a.k.a oldest first
+
+
+class DatabaseHook(abc.ABC):
+
+    @property
+    @abc.abstractmethod
+    def engine(self) -> Engine:
+        pass
+
+    def save_objects(self, *objects: Base):
+        with Session(self.engine) as session:
+            session.add_all(objects)
+            session.commit()
+
+    def delete_objects(self, *objects: Base):
+        with Session(self.engine) as session:
+            for obj in objects:
+                session.delete(obj)
+            session.commit()
 
 
 class StorageHook(abc.ABC):

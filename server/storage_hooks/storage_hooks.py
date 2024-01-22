@@ -44,7 +44,7 @@ class DatabaseHook(abc.ABC):
             before: dt.datetime,
             limit: int = None,
             sort: ReceiptSort = ReceiptSort.newest
-    ) -> list[Base]:
+    ) -> list[Receipt]:
         stmt = select(Receipt).sort(sort.value)
         if after is not None:
             stmt = stmt.where(after < Receipt.upload_dt)

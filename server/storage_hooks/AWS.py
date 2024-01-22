@@ -5,7 +5,7 @@ import boto3
 import botocore.exceptions
 
 from receipt import Receipt
-from storage_hooks.storage_hooks import StorageHook, Sort
+from storage_hooks.storage_hooks import StorageHook, ReceiptSort
 
 
 def init_script():
@@ -55,7 +55,7 @@ class AWSHook(StorageHook):
             raise ValueError
 
     def fetch_receipts(
-        self, limit: int = None, sort: Sort = Sort.newest
+        self, limit: int = None, sort: ReceiptSort = ReceiptSort.newest
     ) -> list[Receipt]:
         max_keys = limit or 1000  # Amazon's default
         response = self.client.list_objects_v2(
@@ -72,7 +72,7 @@ class AWSHook(StorageHook):
         after: dt.datetime,
         before: dt.datetime,
         limit: int = None,
-        sort: Sort = Sort.newest,
+        sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
         pass
 

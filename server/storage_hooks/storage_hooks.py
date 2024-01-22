@@ -17,10 +17,8 @@ class ReceiptSort(enum.Enum):
 
 class DatabaseHook(abc.ABC):
 
-    @property
-    @abc.abstractmethod
-    def engine(self) -> Engine:
-        pass
+    def __init__(self):
+        self.engine: Engine = NotImplemented
 
     def save_objects(self, *objects: Base):
         with Session(self.engine) as session:
@@ -60,6 +58,15 @@ class DatabaseHook(abc.ABC):
         stmt = select(Receipt).where(Tag.id == tag_id)
         with Session(self.engine) as session:
             return session.scalar(stmt)
+
+    @property
+    @abc.abstractmethod
+    def storage_version(self) -> str:
+        """Return scheme version the database is using."""
+
+    def initialize_storage(self):
+        """Initialize storage / database with current scheme."""
+        Base.metadata.create_all(self.engine)
 
 
 class StorageHook(abc.ABC):

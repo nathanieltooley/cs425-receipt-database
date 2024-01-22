@@ -69,6 +69,57 @@ class DatabaseHook(abc.ABC):
         Base.metadata.create_all(self.engine)
 
 
+class FileHook(abc.ABC):
+    """Base class for hooks that store image files."""
+    
+    @abc.abstractmethod
+    def save(self, image: bytes) -> str:
+        """Saves an image
+
+        Args:
+            image: The bytes to save as an image
+        Returns:
+            The string location to fetch the image later
+        """
+
+    @abc.abstractmethod
+    def replace(self, location: str, image: bytes):
+        """Replace image at location with new image
+
+        Args:
+            location: The location of the image to replace
+            image: The image to replace with
+
+        Raises:
+            FileNotFoundError: When the location doesn't exist
+        """
+
+    @abc.abstractmethod
+    def fetch(self, location: str) -> bytes:
+        """Fetches image from location as bytes
+
+        Args:
+            location: Location of the image to fetch
+
+        Returns:
+            byte representation of the image
+
+        Raises:
+            FileNotFoundError: When the location doesn't exist
+        """
+
+    @abc.abstractmethod
+    def delete(self, location: str):
+        """Deletes the image at location
+
+        Args:
+            location: Location of the image to delete
+
+        Raises:
+            FileNotFoundError: When the location doesn't exist
+        """
+    
+    
 class StorageHook(abc.ABC):
     """Base class for hooks to specific services to utilize."""
 

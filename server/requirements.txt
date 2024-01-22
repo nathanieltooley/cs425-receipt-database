@@ -9,3 +9,6 @@ flask ~= 3.0.0
 
 # Directories
 platformdirs ~= 4.1.0
+
+# SQL
+SQLAlchemy~=2.0.25

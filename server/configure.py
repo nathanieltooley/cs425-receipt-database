@@ -1,10 +1,10 @@
 import argparse
-from dataclasses import dataclass, field
+import dataclasses
 import importlib
 import json
 import os
 
-from datetime import datetime
+from dataclasses import dataclass, field, asdict
 from typing import Any, Literal
 from pydantic import TypeAdapter, ValidationError
 
@@ -39,6 +39,10 @@ class _Config:
 
     DEFAULT_FILE_PATH = os.path.normpath(DIRS.user_config_dir + "/config.json")
 
+    def save(self, path: str):
+        with open(path, "w") as file:
+            json.dump(asdict(self), file)
+
     @classmethod
     def from_file(cls, path: str) -> "_Config":
         """Creates a Config object from a JSON file
@@ -53,14 +57,18 @@ class _Config:
         Returns:
             _Config: A valid Config object
         """
-        determined_path = cls.DEFAULT_FILE_PATH
-
         if os.path.exists(path):
-            determined_path = path
+            with open(path) as file:
+                # Throws ValidationError if it fails
+                return TypeAdapter(_Config).validate_python(json.load(file))
 
-        with open(determined_path) as file:
-            # Throws ValidationError if it fails
-            return TypeAdapter(_Config).validate_python(json.load(file))
+        if not os.path.exists(cls.DEFAULT_FILE_PATH):
+            default_config = _Config()
+            default_config.save(cls.DEFAULT_FILE_PATH)
+
+            return default_config
+
+        return _Config()
 
 
 # This attempts to load from a config.json file in the cwd, but if one is not found

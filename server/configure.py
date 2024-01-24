@@ -40,7 +40,19 @@ class _Config:
     DEFAULT_FILE_PATH = os.path.normpath(DIRS.user_config_dir + "/config.json")
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> "_Config":
+        """Creates a Config object from a JSON file
+
+        The pydantic TypeAdapter class will handle parsing and validation.
+        However, this code will throw a ValidationError if the JSON file does not
+        follow the schema
+
+        Args:
+            path (str): Path to JSON file
+
+        Returns:
+            _Config: A valid Config object
+        """
         determined_path = cls.DEFAULT_FILE_PATH
 
         if os.path.exists(path):
@@ -51,6 +63,8 @@ class _Config:
             return TypeAdapter(_Config).validate_python(json.load(file))
 
 
+# This attempts to load from a config.json file in the cwd, but if one is not found
+# it will default to DEFAULT_FILE_PATH
 CONFIG = _Config.from_file("config.json")
 
 

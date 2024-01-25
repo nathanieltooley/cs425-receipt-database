@@ -1,4 +1,4 @@
-# Amazon S3
+# Amazon
 boto3 ~= 1.28.63
 
 # Style Consistency
@@ -11,4 +11,7 @@ flask ~= 3.0.0
 platformdirs ~= 4.1.0
 
 # SQL
-SQLAlchemy~=2.0.25
+SQLAlchemy ~= 2.0.25
+
+# Pydantic
+pydantic ~= 2.5.3

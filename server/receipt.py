@@ -1,6 +1,6 @@
 from datetime import datetime, UTC
 
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Table, TypeDecorator, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql.expression import func
 
@@ -8,6 +8,22 @@ from sqlalchemy.sql.expression import func
 class Base(DeclarativeBase):
     """Used for actions regarding all tables"""
     pass
+
+
+# https://docs.sqlalchemy.org/en/14/core/custom_types.html#store-timezone-aware-timestamps-as-timezone-naive-utc
+class TZDateTime(TypeDecorator):
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = value.astimezone(UTC).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = value.replace(tzinfo=UTC)
+        return value
 
 
 """Intermediary table for many-to-many relationship between receipts and tags"""
@@ -31,17 +47,7 @@ class Receipt(Base):
 
     key: Mapped[str] = mapped_column(primary_key=True)
     body: Mapped[bytes]
-    _upload_dt: Mapped[datetime] = mapped_column(server_default=func.now())
+    upload_dt: Mapped[datetime] = mapped_column(
+        type_=TZDateTime, server_default=func.now()
+    )
     tags: Mapped[list[Tag]] = relationship(secondary=receipt_tag)
-
-    @property
-    def upload_dt(self) -> datetime:
-        if self._upload_dt.tzinfo is None:  # Set to UTC if no timezone set
-            self._upload_dt = self.upload_dt.astimezone(UTC)
-        return self._upload_dt
-
-    @upload_dt.setter
-    def upload_dt(self, dt: datetime):
-        if not isinstance(dt, datetime):
-            raise ValueError(f'upload_dt must be datetime.datetime, got {type(dt)}')
-        self._upload_dt = dt.astimezone(UTC)  # Sets or converts to UTC datetime

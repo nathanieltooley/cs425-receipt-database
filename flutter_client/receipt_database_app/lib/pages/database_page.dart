@@ -24,29 +24,29 @@ class _MyListViewState extends State<MyListView> {
     fetchAndSetReceiptData();
   }
 
-
   Future<void> fetchAndSetReceiptData() async {
-  try {
-    // Make the API call using fetchManyReceipts
-    final apiService = Api();
-    final List<Map<String, dynamic>> receipts = await apiService.fetchManyReceipts();
+    try {
+      // Make the API call using fetchManyReceipts
+      final apiService = Api();
+      final List<Map<String, dynamic>> receipts =
+          await apiService.fetchManyReceipts();
 
-    // Iterate through the receipts and add them to receiptDataList
-    for (final receipt in receipts) {
-      // Store in cache using the ImageCache instance
-      await imageCache.storeBytesInCache(receipt['imageData'], receipt['title']);
+      // Iterate through the receipts and add them to receiptDataList
+      for (final receipt in receipts) {
+        // Store in cache using the ImageCache instance
+        await imageCache.storeBytesInCache(
+            receipt['imageData'], receipt['title']);
+      }
+
+      // Set the state to update the UI with the new data
+      setState(() {
+        receiptDataList.addAll(receipts);
+      });
+    } catch (e) {
+      // Handle errors
+      print('Error fetching and setting receipt data: $e');
     }
-
-    // Set the state to update the UI with the new data
-    setState(() {
-      receiptDataList.addAll(receipts);
-    });
-  } catch (e) {
-    // Handle errors
-    print('Error fetching and setting receipt data: $e');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +77,15 @@ class _MyListViewState extends State<MyListView> {
               imageUrl: receiptDataList[index]['imageUrl'] as String,
               placeholder: (context, url) => CircularProgressIndicator(),
               errorWidget: (context, url, error) => Icon(Icons.error),
+              imageBuilder: (context, imageProvider) => Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: MemoryImage(
+                        imageData), // Use MemoryImage to load image from Uint8List
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             ),
           ),
         );

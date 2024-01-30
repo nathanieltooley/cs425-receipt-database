@@ -26,26 +26,26 @@ class _MyListViewState extends State<MyListView> {
 
 
   Future<void> fetchAndSetReceiptData() async {
-  try {
-    // Make the API call using fetchManyReceipts
-    final apiService = Api();
-    final List<Map<String, dynamic>> receipts = await apiService.fetchManyReceipts();
+    try {
+      // Make the API call using fetchManyReceipts
+      final apiService = Api();
+      final List<Map<String, dynamic>> receipts = await apiService.fetchManyReceipts();
 
-    // Iterate through the receipts and add them to receiptDataList
-    for (final receipt in receipts) {
-      // Store in cache using the ImageCache instance
-      await imageCache.storeBytesInCache(receipt['imageData'], receipt['title']);
+      // Iterate through the receipts and add them to receiptDataList
+      for (final receipt in receipts) {
+        // Store in cache using the ImageCache instance
+        await imageCache.storeBytesInCache(receipt['imageData'], receipt['title']);
+      }
+
+      // Set the state to update the UI with the new data
+      setState(() {
+        receiptDataList.addAll(receipts);
+      });
+    } catch (e) {
+      // Handle errors
+      print('Error fetching and setting receipt data: $e');
     }
-
-    // Set the state to update the UI with the new data
-    setState(() {
-      receiptDataList.addAll(receipts);
-    });
-  } catch (e) {
-    // Handle errors
-    print('Error fetching and setting receipt data: $e');
   }
-}
 
 
   @override
@@ -96,6 +96,7 @@ class DatabasePage extends StatefulWidget {
 
 class _DatabasePageState extends State<DatabasePage> {
   String _filePath = '';
+  TextEditingController _searchController = TextEditingController();
 
   // Allows user to pick a file to upload
   void _pickAndUploadFile() async {
@@ -131,13 +132,6 @@ class _DatabasePageState extends State<DatabasePage> {
         backgroundColor: Colors.blue,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Add search functionality here
-              print('Search button pressed');
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               // Add settings functionality here
@@ -149,6 +143,22 @@ class _DatabasePageState extends State<DatabasePage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    // Add search functionality using _searchController.text
+                    print('Search button pressed with query: ${_searchController.text}');
+                  },
+                ),
+              ),
+            ),
+          ),
           ElevatedButton(
             onPressed: _pickAndUploadFile,
             child: Text('Upload Receipt'),

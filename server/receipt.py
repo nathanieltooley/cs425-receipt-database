@@ -1,12 +1,15 @@
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, ForeignKey, Table, TypeDecorator, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql.expression import func
 
+UTC = timezone.utc
+
 
 class Base(DeclarativeBase):
     """Used for actions regarding all tables"""
+
     pass
 
 
@@ -36,14 +39,14 @@ receipt_tag = Table(
 
 
 class Tag(Base):
-    __tablename__ = 'tag'
+    __tablename__ = "tag"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
 
 
 class Receipt(Base):
-    __tablename__ = 'receipt'
+    __tablename__ = "receipt"
 
     key: Mapped[str] = mapped_column(primary_key=True)
     body: Mapped[bytes]

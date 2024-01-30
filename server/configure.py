@@ -1,5 +1,4 @@
 import argparse
-import dataclasses
 import importlib
 import json
 import os
@@ -16,11 +15,12 @@ DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
 
 @dataclass
 class _StorageHooks:
-    hook: Literal["FS", "AWS", "SQLite3"]
+    file_hook: Literal["FS", "AWS"]
+    meta_hook: Literal["SQLite3"]
 
     @classmethod
     def default(cls) -> "_StorageHooks":
-        return _StorageHooks("FS")
+        return _StorageHooks("FS", "SQLite3")
 
 
 @dataclass
@@ -29,13 +29,25 @@ class _SQLite3Config:
 
     @classmethod
     def default(cls) -> "_SQLite3Config":
-        return _SQLite3Config("")
+        return _SQLite3Config(
+            os.path.normpath(DIRS.user_data_dir + "/receipts.sqlite3")
+        )
+
+
+@dataclass
+class _FileSystemConfig:
+    file_path: str
+
+    @classmethod
+    def default(cls) -> "_FileSystemConfig":
+        return _FileSystemConfig(os.path.normpath(DIRS.user_data_dir))
 
 
 @dataclass
 class _Config:
     SQLite3: _SQLite3Config = field(default_factory=_SQLite3Config.default)
     StorageHooks: _StorageHooks = field(default_factory=_StorageHooks.default)
+    FileSystem: _FileSystemConfig = field(default_factory=_FileSystemConfig.default)
 
     DEFAULT_FILE_PATH = os.path.normpath(DIRS.user_config_dir + "/config.json")
 

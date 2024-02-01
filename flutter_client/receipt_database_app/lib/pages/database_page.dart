@@ -168,22 +168,6 @@ class _DatabasePageState extends State<DatabasePage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: TextField(
-          //     controller: _searchController,
-          //     decoration: InputDecoration(
-          //       hintText: 'Search...',
-          //       suffixIcon: IconButton(
-          //         icon: const Icon(Icons.search),
-          //         onPressed: () {
-          //           // Add search functionality using _searchController.text
-          //           print('Search button pressed with query: ${_searchController.text}');
-          //         },
-          //       ),
-          //     ),
-          //   ),
-          // ),
           ElevatedButton(
             onPressed: _pickAndUploadFile,
             child: Text('Upload Receipt'),

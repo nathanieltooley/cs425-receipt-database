@@ -53,10 +53,10 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
 
-    def fetch_tag(self, tag_id: int) -> Tag:
-        stmt = select(Receipt).where(Tag.id == tag_id)
+    def fetch_tags(self) -> list[Tag]:
+        stmt = select(Tag)
         with Session(self.engine) as session:
-            return session.scalar(stmt)
+            return session.scalar(stmt).all()
 
     @property
     @abc.abstractmethod

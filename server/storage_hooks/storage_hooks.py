@@ -37,8 +37,8 @@ class DatabaseHook(abc.ABC):
 
     def fetch_receipts(
         self,
-        after: dt.datetime,
-        before: dt.datetime,
+        after: dt.datetime = None,
+        before: dt.datetime = None,
         limit: int = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:

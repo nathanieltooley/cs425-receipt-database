@@ -113,7 +113,7 @@ def view_receipt(file_key: str):
 
 @app.route("/api/receipt/fetch_many_keys")
 def fetch_receipt_keys():
-    receipts = meta_hook.fetch_receipts(None, None)
+    receipts = meta_hook.fetch_receipts()
 
     response = {"results": []}
 

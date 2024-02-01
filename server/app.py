@@ -51,6 +51,22 @@ def response_code(status: int) -> Response:
     return Response("", status=status, mimetype="application/json")
 
 
+@app.route("/api/tag/fetch_all")
+def fetch_tags():
+    tags = meta_hook.fetch_tags()
+
+    response = {"results": []}
+
+    for tag in tags:
+        response["results"].append({"id": tag.id, "name": tag.name})
+
+    response_j_string = json.dumps(response)
+    logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
+    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {response_j_string}")
+
+    return Response(response_j_string, 200)
+
+
 @app.route("/api/receipt/upload", methods=["POST"])
 def upload_receipt():
     """API Endpoint for uploading a receipt image"""

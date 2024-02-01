@@ -1,4 +1,5 @@
 import json
+import logging
 import botocore.exceptions
 
 from typing import Optional, cast
@@ -11,6 +12,11 @@ from io import BytesIO
 
 from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
 
+from app_logging import init_logging
+
+init_logging(logging.DEBUG)
+
+logging.info(f"Starting flask app: {__name__}")
 app = Flask(__name__)
 CORS(app)
 
@@ -54,10 +60,10 @@ def upload_receipt():
     file = request.files["file"]
 
     if file.filename == "":
+        logging.error("UPLOAD ENDPOINT: API client sent file with no filename")
         return error_response(
             400, "Missing Filename", "The file has been sent but with no filename."
         )
-        pass
 
     if file:
         filename = file.filename
@@ -74,8 +80,10 @@ def upload_receipt():
         receipt.body = b""
 
         meta_hook.save_objects(receipt)
+        logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
         return response_code(200)
     else:
+        logging.error("UPLOAD ENDPOINT: API client did not send file")
         return error_response(400, "Missing File", "No file has been sent.")
 
 
@@ -103,11 +111,16 @@ def view_receipt(file_key: str):
     # If we made it this far, receipt can not be None so we should be able to safely type cast
     receipt = cast(Receipt, receipt)
 
+    raw_bytes = file_hook.fetch(receipt.key)
     # Convert receipt image into BytesIO object
-    r_bytes = BytesIO(file_hook.fetch(receipt.key))
+    receipt_bytes = BytesIO(raw_bytes)
 
-    file = send_file(r_bytes, download_name=file_key)
+    file = send_file(receipt_bytes, download_name=file_key)
     file.headers["Upload-Date"] = str(receipt.upload_dt)
+    logging.info(
+        f"GET_KEY ENDPOINT: Returning file, {file_key}, to client. Size: {len(raw_bytes)};"
+    )
+    logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
     return file
 
 
@@ -122,7 +135,11 @@ def fetch_receipt_keys():
             {"key": r.key, "metadata": {"upload_dt": str(r.upload_dt)}}
         )
 
-    return Response(json.dumps(response), 200)
+    response_j_string = json.dumps(response)
+    logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
+    logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {response_j_string}")
+
+    return Response(response_j_string, 200)
 
 
 @app.route("/api/receipt/delete/<file_key>")
@@ -137,5 +154,7 @@ def delete_receipt(file_key: str):
 
     r = meta_hook.fetch_receipt(file_key)
     meta_hook.delete_objects(r)
+
+    logging.info(f"DELETE ENDPOINT: Deleting {file_key}")
 
     return response_code(200)

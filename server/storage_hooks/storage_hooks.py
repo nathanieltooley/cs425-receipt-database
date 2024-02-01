@@ -16,7 +16,6 @@ class ReceiptSort(enum.Enum):
 
 
 class DatabaseHook(abc.ABC):
-
     def __init__(self):
         self.engine: Engine = NotImplemented
 
@@ -37,13 +36,13 @@ class DatabaseHook(abc.ABC):
             return session.scalar(stmt)
 
     def fetch_receipts(
-            self,
-            after: dt.datetime,
-            before: dt.datetime,
-            limit: int = None,
-            sort: ReceiptSort = ReceiptSort.newest
+        self,
+        after: dt.datetime,
+        before: dt.datetime,
+        limit: int = None,
+        sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
-        stmt = select(Receipt).sort(sort.value)
+        stmt = select(Receipt).order_by(sort.value)
         if after is not None:
             stmt = stmt.where(after < Receipt.upload_dt)
         if before is not None:
@@ -71,7 +70,7 @@ class DatabaseHook(abc.ABC):
 
 class FileHook(abc.ABC):
     """Base class for hooks that store image files."""
-    
+
     @abc.abstractmethod
     def save(self, image: bytes) -> str:
         """Saves an image
@@ -118,8 +117,8 @@ class FileHook(abc.ABC):
         Raises:
             FileNotFoundError: When the location doesn't exist
         """
-    
-    
+
+
 class StorageHook(abc.ABC):
     """Base class for hooks to specific services to utilize."""
 

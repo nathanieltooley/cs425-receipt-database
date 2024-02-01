@@ -67,6 +67,21 @@ def fetch_tags():
     return Response(response_j_string, 200)
 
 
+@app.route("/api/tag/delete/<int:tag_id>")
+def delete_tag(tag_id: int):
+    """Deletes a Tag
+
+    Args:
+        tag_id: The  name to delete
+    """
+    tag = meta_hook.fetch_tag(tag_id)
+    meta_hook.delete_objects(tag)
+
+    logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
+
+    return response_code(200)
+
+
 @app.route("/api/receipt/upload", methods=["POST"])
 def upload_receipt():
     """API Endpoint for uploading a receipt image"""

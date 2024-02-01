@@ -15,7 +15,9 @@ class MyListView extends StatefulWidget {
 
 class _MyListViewState extends State<MyListView> {
   List<Map<String, dynamic>> receiptDataList = [];
+   List<Map<String, dynamic>> filteredReceipts = [];
   final MyImageCache.ImageCache imageCache = MyImageCache.ImageCache();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _MyListViewState extends State<MyListView> {
       // Set the state to update the UI with the new data
       setState(() {
         receiptDataList.addAll(receipts);
+        filteredReceipts.addAll(receipts);
       });
     } catch (e) {
       // Handle errors
@@ -47,40 +50,62 @@ class _MyListViewState extends State<MyListView> {
     }
   }
 
+  void _filterReceipts(String query) {
+    setState(() {
+      filteredReceipts = receiptDataList
+          .where((receipt) => receipt['title'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: receiptDataList.length,
-      itemBuilder: (context, index) {
-        final title = receiptDataList[index]['title'] as String;
-        final imageData = receiptDataList[index]['imageData'] as Uint8List;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            controller: _searchController,
+            onChanged: _filterReceipts,
+            decoration: InputDecoration(
+              hintText: 'Search by name...',
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: filteredReceipts.length,
+            itemBuilder: (context, index) {
+              final title = filteredReceipts[index]['title'] as String;
+              final imageData = filteredReceipts[index]['imageData'] as Uint8List;
 
-        return Card(
-          elevation: 5,
-          margin: const EdgeInsets.all(8),
-          child: ListTile(
-            title: Text(title),
-            onTap: () {
-              // Navigate to ReceiptDetailPage when ListTile is tapped
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReceiptDetailPage(
-                    title: title,
-                    imageData: imageData,
+              return Card(
+                elevation: 5,
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  title: Text(title),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReceiptDetailPage(
+                          title: title,
+                          imageData: imageData,
+                        ),
+                      ),
+                    );
+                  },
+                  leading: CachedNetworkImage(
+                    imageUrl: filteredReceipts[index]['imageUrl'] as String,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
                   ),
                 ),
               );
             },
-            leading: CachedNetworkImage(
-              imageUrl: receiptDataList[index]['imageUrl'] as String,
-              placeholder: (context, url) => CircularProgressIndicator(),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-            ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -143,22 +168,22 @@ class _DatabasePageState extends State<DatabasePage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search...',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {
-                    // Add search functionality using _searchController.text
-                    print('Search button pressed with query: ${_searchController.text}');
-                  },
-                ),
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: TextField(
+          //     controller: _searchController,
+          //     decoration: InputDecoration(
+          //       hintText: 'Search...',
+          //       suffixIcon: IconButton(
+          //         icon: const Icon(Icons.search),
+          //         onPressed: () {
+          //           // Add search functionality using _searchController.text
+          //           print('Search button pressed with query: ${_searchController.text}');
+          //         },
+          //       ),
+          //     ),
+          //   ),
+          // ),
           ElevatedButton(
             onPressed: _pickAndUploadFile,
             child: Text('Upload Receipt'),

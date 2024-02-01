@@ -4,12 +4,18 @@ import botocore.exceptions
 from typing import Optional, cast
 from flask_cors import CORS
 from flask import Flask, Response, request, send_file
+from configure import CONFIG
 from receipt import Receipt
-from storage_hooks.AWS import AWSHook
+from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
+
+from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
 
 app = Flask(__name__)
 CORS(app)
+
+file_hook = get_file_hook(CONFIG.StorageHooks.file_hook)
+meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
 
 
 def error_response(status: int, error_name: str, error_message: str) -> Response:
@@ -61,8 +67,13 @@ def upload_receipt():
         im_bytes = b"".join(file.stream.readlines())
         file.close()
 
-        aws = AWSHook()
-        aws.upload_receipt(Receipt(filename, im_bytes))
+        r_key = file_hook.save(im_bytes)
+
+        receipt = Receipt()
+        receipt.key = r_key
+        receipt.body = b""
+
+        meta_hook.save_objects(receipt)
         return response_code(200)
     else:
         return error_response(400, "Missing File", "No file has been sent.")
@@ -77,11 +88,10 @@ def view_receipt(file_key: str):
     Args:
         file_key: The AWS file name to view
     """
-    aws = AWSHook()
     receipt: Optional[Receipt] = None
 
     try:
-        receipt = aws.fetch_receipt(file_key)
+        receipt = meta_hook.fetch_receipt(file_key)
     except botocore.exceptions.ClientError as error:
         if error.response["Error"]["Code"] == "NoSuchKey":
             return error_response(
@@ -94,7 +104,7 @@ def view_receipt(file_key: str):
     receipt = cast(Receipt, receipt)
 
     # Convert receipt image into BytesIO object
-    r_bytes = BytesIO(receipt.body)
+    r_bytes = BytesIO(file_hook.fetch(receipt.key))
 
     file = send_file(r_bytes, download_name=file_key)
     file.headers["Upload-Date"] = str(receipt.upload_dt)
@@ -103,8 +113,7 @@ def view_receipt(file_key: str):
 
 @app.route("/api/receipt/fetch_many_keys")
 def fetch_receipt_keys():
-    aws = AWSHook()
-    receipts = aws.fetch_receipts()
+    receipts = meta_hook.fetch_receipts(None, None)
 
     response = {"results": []}
 
@@ -124,7 +133,9 @@ def delete_receipt(file_key: str):
         file_key: The AWS file name to delete
 
     """
-    aws = AWSHook()
-    aws.delete_receipt_by_id(file_key)
+    file_hook.delete(file_key)
+
+    r = meta_hook.fetch_receipt(file_key)
+    meta_hook.delete_objects(r)
 
     return response_code(200)

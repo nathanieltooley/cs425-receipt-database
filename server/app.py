@@ -78,6 +78,19 @@ def upload_tag(tag_name: str):
     # A new function may be needed
 
 
+@app.route("/api/tag/fetch/<int:tag_id>")
+def fetch_tag(tag_id: int):
+    tag = meta_hook.fetch_tag(tag_id)
+
+    response = {"result": {"id": tag.id, "name": tag.name}}
+
+    response_j_string = json.dumps(response)
+    logging.info(f"FETCH_TAG ENDPOINT: Returning 1 tag")
+    logging.debug(f"FETCH_TAG ENDPOINT: Response: {response_j_string}")
+
+    return Response(response_j_string, 200)
+
+
 @app.route("/api/tag/fetch_all")
 def fetch_tags():
     tags = meta_hook.fetch_tags()

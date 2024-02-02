@@ -6,7 +6,7 @@ from typing import Optional, cast
 from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
-from receipt import Receipt
+from receipt import Receipt, Tag
 from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
 
@@ -49,6 +49,33 @@ def response_code(status: int) -> Response:
         Response
     """
     return Response("", status=status, mimetype="application/json")
+
+
+@app.route("/api/tag/add/<tag_name>", methods=["POST"])
+def upload_tag(tag_name: str):
+    """API Endpoint for uploading a receipt image.
+
+    Args:
+        tag_name: The name for the tag to create
+    Returns:
+        ~~The id for the newly created tag~~ Code 200
+    Raises:
+        400 if tag_name is empty
+    """
+
+    if tag_name == "":
+        logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
+        return error_response(
+            400, "Missing Name", "Tag Name not specified"
+        )
+
+    tag = Tag(name=tag_name)
+    meta_hook.save_objects(tag)
+    return response_code(200)
+    # return Response(tag.id, 200)
+    # ToDo: Return auto_generated tag_id from database
+    # I can't figure out how to load the id after saving with our existing functions
+    # A new function may be needed
 
 
 @app.route("/api/tag/fetch_all")

@@ -1,3 +1,69 @@
+# Overview
+
+## All Endpoints
+- `/api/receipt/fetch_many_keys`
+  - `GET`: [Fetch Many Keys](#fetch-many-keys)
+- `/api/receipt/upload`
+  - `POST`: [Receipt Upload](#upload)
+- `/api/receipt/view/<file_key>`
+  - `GET`: [View Receipt](#view-receipt)
+- `/api/receipt/delete/<file_key>`
+  - `GET`: [Delete Receipt](#delete)
+- `/api/tag/fetch_all`
+  - `GET`: [Fetch All](#fetch-all-tags)
+- `/api/tag/add/<tag_name>`
+  - `POST`: [Add Tag](#add)
+- `/api/tag/fetch/<tag_id>`
+  - `GET`: [Fetch Tag](#fetch-tag)
+- `/api/tag/delete/<tag_id>`
+  - `GET`: [Delete Tag](#delete-1)
+
+## Responses
+For more information about HTTP Responses 
+see the [MDN Article](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
+
+### Successful Responses
+These responses indicate successful processing of the client's request.
+These will be mentioned for each applicable endpoint 
+with body / header format (if applicable),
+but meaning will may not be elaborated on.
+- **`200` - OK**
+  - Successful processing of the request
+  - Body contains requested or resulting resource.
+- **`201` - Created**
+  - Successfully created resource from request
+  - Unclear when to use over `200`
+- **`204` - No Content**
+  - Successful processing of the request
+  - Body is empty
+
+### Client Error Responses
+These responses indicate an issue with the client's request.
+These will be mentioned for each applicable endpoint,
+but meaning will may not be elaborated on.
+- **`400` - Bad Request**
+  - The request is missing required information or is formatted incorrectly.
+- **`401` - Unauthorized (Unauthenticated)**
+  - The request is missing or has invalid authentication required for this method
+  - (Not Implemented)
+- **`403` - Forbidden**
+  - The request's authentication does not grant it access to the resource.
+  - (Not Implemented)
+- **`404` - Not Found**
+  - The requested resource does not exist
+
+### Server Error Responses
+These responses indicated an issue on the server side that a client cannot fix themselves. 
+- **`500` - Internal Server Error**
+  - Generic error occurred while processing the request
+  - Possible on any request
+- **`501` - Not Implemented**
+  - The functionality for this request has not been implemented yet
+  - Will be stated per applicable endpoint
+- **`507` - Insufficient Storage**
+  - The connected file storage or database is out of space
+  - Possible on any `POST` and `PUT` request
+
 # Receipts
 ## Upload
 Uploads a file to the system. 

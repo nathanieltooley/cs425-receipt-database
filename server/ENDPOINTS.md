@@ -1,63 +1,108 @@
 # Receipts
-## Upload (POST)
-Full endpoint - **/api/receipt/upload**
+## Upload
+Uploads a file to the system. 
 
-### Usage
-Send a POST request that contains a _file_ key where the file you wish to upload is stored. This file must have a valid filename.
+- Endpoint: **`/api/receipt/upload`**
+- Method: `POST`
+- `POST` Data:
+  - `file`
+    - The file to be uploaded.
+    - Filename will be used as key to fetch later.
+      - Must be a valid filename for the file store being used.
 
-### User Errors
-**Missing Key - 200**: When an upload request does not specify a "file" key where the file is stored
-**Missing Filename - 400**: When an upload request is sent without a filename
-**Missing File - 400**: When an upload request is sent without a file
+### Responses
+- **`200` - OK**
+- ~~**`201` - Created**~~
+  - Unclear when to use `200` vs `201`
+- **`400` - Missing Key**
+  - When an upload request does not specify a "file" key where the file is stored
+- **`400` - Missing Filename**
+  - When an upload request is sent without a filename
+- **`400` - Missing File**
+  - When an upload request is sent without a file
 
-## View Receipt (GET)
-Full endpoint - **/api/receipt/view/<file_key>**, where file_key is the name of the key you wish to view
+## View Receipt
+Fetch a receipt's image.
+- Endpoint: `/api/receipt/view/<file_key>`
+  - `file_key`: The name of the key you wish to view
+- Method `GET`
 
-### Usage
-Send a GET request to the **/api/receipt/view** endpoint and specify a file_key. This key is the key that represents the file in the DB.
+### Responses
+- **`200` - OK**
+  - Content-Type: Any
+  - `Body` - The image of the requested receipt
+- **`404` - No Such Key**
+  - If the requested key is not found in the database
 
-### User Errors
-**No Such Key - 400**: If the requested key is not found in the database
+## Fetch Many Keys
+Fetch all know receipt keys
+- Endpoint: `/api/receipt/fetch_many_keys`
+- Method: `GET`
 
-## Fetch Many Keys (GET)
-Full endpoint - **/api/receipt/fetch_many_keys**
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/html`
+  - `Body`: `{"results":[<tag_id_1>, <tag_id_2>, ...]`
+    - Array may be empty
 
-### Usage
-Send a GET request. Currently returns all known keys inside the database.
+## Delete
+- Endpoint: `/api/receipt/delete/<file_key>`
+  - `file_key`: The name of the key you wish to delete
+- Method: `GET`
+  - **Absolutely _should NOT_ be `GET`! Change to `DELETE` ASAP!**
 
-## Delete (GET)
-Full endpoint - **/api/receipt/delete/<file_key>**, where file_key is the name of the key you wish to delete
+### Responses
+- **`204` - No Content** OR **`200` - OK**
+  - Receipt existed and has been removed
+- **`404` - Not Found**
+  - Receipt does not exist
+  - Means either:
+    - Receipt already deleted
+    - Incorrect Key
 
-### Usage
-Send a GET request to the **/api/receipt/delete/** endpoint and specify a file_key. This key is the key that represents the file in the DB.
 
 # Tags
-## Add (POST)
-Full endpoint - **/api/tag/add/<tag_name>**, where tag_name is the name of the tag you wish to create
+## Add
+- Endpoint:  `/api/tag/add/<tag_name>`
+  - `tag_name`: The name of the tag you wish to create
+- Method: `POST`
+- `POST` Data:
+  - None
 
-### Usage
-Send a empty (for now) POST request to the endpoint, specifying the tag_name
+### Responses
+- **`200` - OK**
+- **`400` - Missing Name**
+  - When an upload request does not specify a tag name
 
-### User Errors
-**Missing Name - 400**: When an upload request does not specify a tag name
+## Fetch Tag
+- Endpoint - `/api/tag/fetch/<int: tag_id>`
+  - `tag_id`: Int id of the tag you wish to fetch
+- Method: `GET`
 
-## Fetch Tag (GET)
-Full endpoint - **/api/tag/fetch/<int\:tag_id>**, where tag_id is int id of the tag you wish to fetch
+### Responses
+- **`400` - No Such Tag**
+  - If the requested tag id is not found in the database
 
-### Usage
-Send a GET request to the **/api/tag/fetch/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+## Fetch All Tags
+Fetch all tag ids and names
+- Endpoint: `/api/tag/fetch_all`
+- Method: `GET`
 
-### User Errors
-**No Such Tag - 400**: If the requested tag id is not found in the database
+### Responses
+- **`200` - OK**
 
-## Fetch All Tags (GET)
-Full endpoint - **/api/tag/fetch_all**
+## Delete
+Delete the specified tag
+- Endpoint - `/api/tag/delete/<int\:tag_id>`
+  - `tag_id`: The int id of the key you wish to delete
+- Method: `GET`
+  - **Absolutely _should NOT_ be `GET`! Change to `DELETE` ASAP!**
 
-### Usage
-Send a GET request. Currently returns all known tags inside the database.
-
-## Delete (GET)
-Full endpoint - **/api/tag/delete/<int\:tag_id>**, where tag_id is the int id of the key you wish to delete
-
-### Usage
-Send a GET request to the **/api/tag/delete/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+### Responses
+- **`204` - No Content** OR **`200` - OK**
+  - Tag existed and has been removed
+- **`404` - Not Found**
+  - Tag does not exist
+  - Means either:
+    - Tag already deleted
+    - Incorrect Key

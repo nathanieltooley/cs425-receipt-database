@@ -65,9 +65,7 @@ def upload_tag():
 
     if tag_name == "":
         logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
-        return error_response(
-            400, "Missing Name", "Tag Name not specified"
-        )
+        return error_response(400, "Missing Name", "Tag Name not specified")
 
     tag = Tag(name=tag_name)
     return str(meta_hook.create_tag(tag))
@@ -102,7 +100,7 @@ def fetch_tags():
     return Response(response_j_string, 200)
 
 
-@app.route("/api/tag/<int:tag_id>", methods=['DELETE'])
+@app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
 def delete_tag(tag_id: int):
     """Deletes a Tag
 
@@ -131,6 +129,9 @@ def upload_receipt():
             400, "Missing Filename", "The file has been sent but with no filename."
         )
 
+    logging.debug(request.form)
+    tags = request.form.getlist("tag", type=int)
+
     if file:
         filename = file.filename
         filename = cast(str, filename)
@@ -144,6 +145,7 @@ def upload_receipt():
         receipt = Receipt()
         receipt.key = r_key
         receipt.body = b""
+        receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
         meta_hook.save_objects(receipt)
         logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")

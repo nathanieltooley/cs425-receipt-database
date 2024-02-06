@@ -51,17 +51,17 @@ def response_code(status: int) -> Response:
     return Response("", status=status, mimetype="application/json")
 
 
-@app.route("/api/tag/add/<tag_name>", methods=["POST"])
-def upload_tag(tag_name: str):
+@app.route("/api/tag/", methods=["POST"])
+def upload_tag():
     """API Endpoint for uploading a receipt image.
 
-    Args:
-        tag_name: The name for the tag to create
     Returns:
         ~~The id for the newly created tag~~ Code 200
     Raises:
         400 if tag_name is empty
     """
+
+    tag_name = request.form.get("name", "")
 
     if tag_name == "":
         logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
@@ -73,7 +73,7 @@ def upload_tag(tag_name: str):
     return str(meta_hook.create_tag(tag))
 
 
-@app.route("/api/tag/fetch/<int:tag_id>")
+@app.route("/api/tag/<int:tag_id>")
 def fetch_tag(tag_id: int):
     tag = meta_hook.fetch_tag(tag_id)
 
@@ -86,7 +86,7 @@ def fetch_tag(tag_id: int):
     return Response(response_j_string, 200)
 
 
-@app.route("/api/tag/fetch_all")
+@app.route("/api/tag/")
 def fetch_tags():
     tags = meta_hook.fetch_tags()
 
@@ -102,7 +102,7 @@ def fetch_tags():
     return Response(response_j_string, 200)
 
 
-@app.route("/api/tag/delete/<int:tag_id>")
+@app.route("/api/tag/<int:tag_id>", methods=['DELETE'])
 def delete_tag(tag_id: int):
     """Deletes a Tag
 

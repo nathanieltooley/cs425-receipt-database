@@ -37,8 +37,8 @@ class DatabaseHook(abc.ABC):
         #     session.commit()
         #     return Receipt.id
 
-    def fetch_receipt(self, key: str) -> Receipt:
-        stmt = select(Receipt).where(Receipt.key == key)
+    def fetch_receipt(self, id_: int) -> Receipt:
+        stmt = select(Receipt).where(Receipt.id == id_)
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
@@ -70,9 +70,9 @@ class DatabaseHook(abc.ABC):
     def update_receipt(self, diff: dict) -> Receipt:
         raise NotImplementedError
 
-    def delete_receipt(self, key: Receipt.key) -> None:
+    def delete_receipt(self, id_: Receipt.id) -> None:
         with Session(self.engine) as session:
-            stmt = delete(Receipt).where(Receipt.key == key)
+            stmt = delete(Receipt).where(Receipt.id == id_)
             session.execute(stmt)
 
     def create_tag(self, tag: Tag) -> Tag.id:

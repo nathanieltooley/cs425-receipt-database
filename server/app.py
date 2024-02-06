@@ -79,8 +79,7 @@ def upload_receipt():
         r_key = file_hook.save(im_bytes)
 
         receipt = Receipt()
-        receipt.key = r_key
-        receipt.body = b""
+        receipt.storage_key = r_key
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
         meta_hook.save_objects(receipt)
@@ -115,7 +114,7 @@ def view_receipt(file_key: str):
     # If we made it this far, receipt can not be None so we should be able to safely type cast
     receipt = cast(Receipt, receipt)
 
-    raw_bytes = file_hook.fetch(receipt.key)
+    raw_bytes = file_hook.fetch(receipt.storage_key)
     # Convert receipt image into BytesIO object
     receipt_bytes = BytesIO(raw_bytes)
 
@@ -137,7 +136,7 @@ def fetch_receipt_keys():
     for r in receipts:
         response["results"].append(
             {
-                "key": r.key,
+                "id": r.id,
                 "metadata": {
                     "upload_dt": str(r.upload_dt),
                     "tags": [t.id for t in r.tags],

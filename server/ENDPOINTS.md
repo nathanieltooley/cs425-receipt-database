@@ -33,7 +33,7 @@ Send a GET request to the **/api/receipt/delete/** endpoint and specify a file_k
 
 # Tags
 ## Add (POST)
-Full endpoint - **/api/tag/**, where tag_name is the name of the tag you wish to create
+Full endpoint - **/api/tag/**
 
 ### Usage
 Send POST request to the endpoint, specifying the "name=<tag_name>" in the POST data.

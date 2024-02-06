@@ -2,7 +2,7 @@ import abc
 import datetime as dt
 import enum
 
-from sqlalchemy import Engine, select, asc, desc
+from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session
 
 from receipt import Receipt, Base, Tag
@@ -30,6 +30,13 @@ class DatabaseHook(abc.ABC):
                 session.delete(obj)
             session.commit()
 
+    def create_receipt(self, receipt: Receipt):
+        raise NotImplementedError
+        # with Session(self.engine) as session:
+        #     session.add(receipt)
+        #     session.commit()
+        #     return Receipt.id
+
     def fetch_receipt(self, key: str) -> Receipt:
         stmt = select(Receipt).where(Receipt.key == key)
         with Session(self.engine) as session:
@@ -39,6 +46,8 @@ class DatabaseHook(abc.ABC):
         self,
         after: dt.datetime = None,
         before: dt.datetime = None,
+        tags: list[Tag] = None,
+        match_all_tags: bool = False,
         limit: int = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
@@ -47,16 +56,48 @@ class DatabaseHook(abc.ABC):
             stmt = stmt.where(after < Receipt.upload_dt)
         if before is not None:
             stmt = stmt.where(before > Receipt.upload_dt)
+        if tags is not None:
+            if match_all_tags:
+                stmt = stmt.where(Receipt.tags.all(Tag.id.in_(tags)))
+            else:
+                stmt = stmt.where(Receipt.tags.any(Tag.id.in_(tags)))
         if limit is not None:
             stmt = stmt.limit(limit)
 
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
 
+    def update_receipt(self, diff: dict) -> Receipt:
+        raise NotImplementedError
+
+    def delete_receipt(self, key: Receipt.key) -> None:
+        with Session(self.engine) as session:
+            stmt = delete(Receipt).where(Receipt.key == key)
+            session.execute(stmt)
+
+    def create_tag(self, tag: Tag) -> Tag.id:
+        with Session(self.engine) as session:
+            session.add(tag)
+            session.commit()
+            return tag.id
+
     def fetch_tag(self, tag_id: int) -> Tag:
-        stmt = select(Receipt).where(Tag.id == tag_id)
+        stmt = select(Tag).where(Tag.id == tag_id)
         with Session(self.engine) as session:
             return session.scalar(stmt)
+
+    def fetch_tags(self) -> list[Tag]:
+        stmt = select(Tag)
+        with Session(self.engine) as session:
+            return session.scalars(stmt).all()
+
+    def update_tag(self, diff: dict) -> Tag:
+        raise NotImplementedError
+
+    def delete_tag(self, tag_id: Tag.id) -> None:
+        with Session(self.engine) as session:
+            stmt = delete(Tag).where(Tag.id == tag_id)
+            session.execute(stmt)
 
     @property
     @abc.abstractmethod

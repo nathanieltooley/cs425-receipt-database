@@ -6,7 +6,7 @@ from typing import Optional, cast
 from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
-from receipt import Receipt
+from receipt import Receipt, Tag
 from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
 
@@ -49,6 +49,72 @@ def response_code(status: int) -> Response:
         Response
     """
     return Response("", status=status, mimetype="application/json")
+
+
+@app.route("/api/tag/", methods=["POST"])
+def upload_tag():
+    """API Endpoint for uploading a receipt image.
+
+    Returns:
+        ~~The id for the newly created tag~~ Code 200
+    Raises:
+        400 if tag_name is empty
+    """
+
+    tag_name = request.form.get("name", "")
+
+    if tag_name == "":
+        logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
+        return error_response(
+            400, "Missing Name", "Tag Name not specified"
+        )
+
+    tag = Tag(name=tag_name)
+    return str(meta_hook.create_tag(tag))
+
+
+@app.route("/api/tag/<int:tag_id>")
+def fetch_tag(tag_id: int):
+    tag = meta_hook.fetch_tag(tag_id)
+
+    response = {"result": {"id": tag.id, "name": tag.name}}
+
+    response_j_string = json.dumps(response)
+    logging.info(f"FETCH_TAG ENDPOINT: Returning 1 tag")
+    logging.debug(f"FETCH_TAG ENDPOINT: Response: {response_j_string}")
+
+    return Response(response_j_string, 200)
+
+
+@app.route("/api/tag/")
+def fetch_tags():
+    tags = meta_hook.fetch_tags()
+
+    response = {"results": []}
+
+    for tag in tags:
+        response["results"].append({"id": tag.id, "name": tag.name})
+
+    response_j_string = json.dumps(response)
+    logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
+    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {response_j_string}")
+
+    return Response(response_j_string, 200)
+
+
+@app.route("/api/tag/<int:tag_id>", methods=['DELETE'])
+def delete_tag(tag_id: int):
+    """Deletes a Tag
+
+    Args:
+        tag_id: The  name to delete
+    """
+    tag = meta_hook.fetch_tag(tag_id)
+    meta_hook.delete_objects(tag)
+
+    logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
+
+    return response_code(200)
 
 
 @app.route("/api/receipt/upload", methods=["POST"])

@@ -46,6 +46,8 @@ class DatabaseHook(abc.ABC):
         self,
         after: dt.datetime = None,
         before: dt.datetime = None,
+        tags: list[Tag] = None,
+        match_all_tags: bool = False,
         limit: int = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
@@ -54,6 +56,11 @@ class DatabaseHook(abc.ABC):
             stmt = stmt.where(after < Receipt.upload_dt)
         if before is not None:
             stmt = stmt.where(before > Receipt.upload_dt)
+        if tags is not None:
+            if match_all_tags:
+                stmt = stmt.where(Receipt.tags.all(Tag.id.in_(tags)))
+            else:
+                stmt = stmt.where(Receipt.tags.any(Tag.id.in_(tags)))
         if limit is not None:
             stmt = stmt.limit(limit)
 

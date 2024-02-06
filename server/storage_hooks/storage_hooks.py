@@ -2,7 +2,7 @@ import abc
 import datetime as dt
 import enum
 
-from sqlalchemy import Engine, select, asc, desc
+from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session
 
 from receipt import Receipt, Base, Tag
@@ -68,6 +68,14 @@ class DatabaseHook(abc.ABC):
         stmt = select(Tag)
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
+
+    def update_tag(self, diff: dict) -> Tag:
+        raise NotImplementedError
+
+    def delete_tag(self, tag_id: Tag.id) -> None:
+        with Session(self.engine) as session:
+            stmt = delete(Tag).where(Tag.id == tag_id)
+            session.execute(stmt)
 
     @property
     @abc.abstractmethod

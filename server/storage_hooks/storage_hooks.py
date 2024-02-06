@@ -53,6 +53,12 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
 
+    def create_tag(self, tag: Tag) -> Tag.id:
+        with Session(self.engine) as session:
+            session.add(tag)
+            session.commit()
+            return tag.id
+
     def fetch_tag(self, tag_id: int) -> Tag:
         stmt = select(Tag).where(Tag.id == tag_id)
         with Session(self.engine) as session:

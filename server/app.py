@@ -70,12 +70,7 @@ def upload_tag(tag_name: str):
         )
 
     tag = Tag(name=tag_name)
-    meta_hook.save_objects(tag)
-    return response_code(200)
-    # return Response(tag.id, 200)
-    # ToDo: Return auto_generated tag_id from database
-    # I can't figure out how to load the id after saving with our existing functions
-    # A new function may be needed
+    return str(meta_hook.create_tag(tag))
 
 
 @app.route("/api/tag/fetch/<int:tag_id>")

@@ -86,9 +86,11 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
-    def fetch_tags(self) -> list[Tag]:
-        stmt = select(Tag)
+    def fetch_tags(self, tag_ids: list[int] = None) -> list[Tag]:
         with Session(self.engine) as session:
+            stmt = select(Tag)
+            if tag_ids is not None:
+                stmt = stmt.filter(Tag.id.in_(tag_ids))
             return session.scalars(stmt).all()
 
     def update_tag(self, diff: dict) -> Tag:

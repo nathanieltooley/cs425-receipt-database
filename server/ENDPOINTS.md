@@ -33,31 +33,31 @@ Send a GET request to the **/api/receipt/delete/** endpoint and specify a file_k
 
 # Tags
 ## Add (POST)
-Full endpoint - **/api/tag/add/<tag_name>**, where tag_name is the name of the tag you wish to create
+Full endpoint - **/api/tag/**, where tag_name is the name of the tag you wish to create
 
 ### Usage
-Send a empty (for now) POST request to the endpoint, specifying the tag_name
+Send POST request to the endpoint, specifying the "name=<tag_name>" in the POST data.
 
 ### User Errors
 **Missing Name - 400**: When an upload request does not specify a tag name
 
 ## Fetch Tag (GET)
-Full endpoint - **/api/tag/fetch/<int\:tag_id>**, where tag_id is int id of the tag you wish to fetch
+Full endpoint - **/api/tag/<int\:tag_id>**, where tag_id is int id of the tag you wish to fetch
 
 ### Usage
-Send a GET request to the **/api/tag/fetch/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+Send a GET request to the **/api/tag/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
 
 ### User Errors
 **No Such Tag - 400**: If the requested tag id is not found in the database
 
 ## Fetch All Tags (GET)
-Full endpoint - **/api/tag/fetch_all**
+Full endpoint - **/api/tag/**
 
 ### Usage
 Send a GET request. Currently returns all known tags inside the database.
 
-## Delete (GET)
-Full endpoint - **/api/tag/delete/<int\:tag_id>**, where tag_id is the int id of the key you wish to delete
+## Delete (DELETE)
+Full endpoint - **/api/tag/<int\:tag_id>**, where tag_id is the int id of the key you wish to delete
 
 ### Usage
-Send a GET request to the **/api/tag/delete/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+Send a GET request to the **/api/tag/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.

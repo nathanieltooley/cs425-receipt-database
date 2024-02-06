@@ -175,7 +175,7 @@ def upload_tag():
     """API Endpoint for uploading a receipt image.
 
     Returns:
-        ~~The id for the newly created tag~~ Code 200
+        The id for the newly created tag
     Raises:
         400 if tag_name is empty
     """

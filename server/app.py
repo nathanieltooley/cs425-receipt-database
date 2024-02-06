@@ -200,7 +200,13 @@ def fetch_receipt_keys():
 
     for r in receipts:
         response["results"].append(
-            {"key": r.key, "metadata": {"upload_dt": str(r.upload_dt)}}
+            {
+                "key": r.key,
+                "metadata": {
+                    "upload_dt": str(r.upload_dt),
+                    "tags": [t.id for t in r.tags],
+                },
+            }
         )
 
     response_j_string = json.dumps(response)

@@ -3,7 +3,7 @@ import datetime as dt
 import enum
 
 from sqlalchemy import Engine, select, delete, asc, desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from receipt import Receipt, Base, Tag
 
@@ -51,7 +51,7 @@ class DatabaseHook(abc.ABC):
         limit: int = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
-        stmt = select(Receipt).order_by(sort.value)
+        stmt = select(Receipt).options(selectinload(Receipt.tags)).order_by(sort.value)
         if after is not None:
             stmt = stmt.where(after < Receipt.upload_dt)
         if before is not None:

@@ -3,7 +3,7 @@ import datetime as dt
 import enum
 
 from sqlalchemy import Engine, select, delete, asc, desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from receipt import Receipt, Base, Tag
 
@@ -51,7 +51,7 @@ class DatabaseHook(abc.ABC):
         limit: int = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
-        stmt = select(Receipt).order_by(sort.value)
+        stmt = select(Receipt).options(selectinload(Receipt.tags)).order_by(sort.value)
         if after is not None:
             stmt = stmt.where(after < Receipt.upload_dt)
         if before is not None:
@@ -86,9 +86,11 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
-    def fetch_tags(self) -> list[Tag]:
-        stmt = select(Tag)
+    def fetch_tags(self, tag_ids: list[int] = None) -> list[Tag]:
         with Session(self.engine) as session:
+            stmt = select(Tag)
+            if tag_ids is not None:
+                stmt = stmt.filter(Tag.id.in_(tag_ids))
             return session.scalars(stmt).all()
 
     def update_tag(self, diff: dict) -> Tag:

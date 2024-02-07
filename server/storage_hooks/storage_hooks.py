@@ -1,6 +1,7 @@
 import abc
 import datetime as dt
 import enum
+from pathlib import Path
 
 from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session, selectinload
@@ -37,8 +38,8 @@ class DatabaseHook(abc.ABC):
         #     session.commit()
         #     return Receipt.id
 
-    def fetch_receipt(self, key: str) -> Receipt:
-        stmt = select(Receipt).where(Receipt.key == key)
+    def fetch_receipt(self, id_: int) -> Receipt:
+        stmt = select(Receipt).where(Receipt.id == id_)
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
@@ -70,10 +71,12 @@ class DatabaseHook(abc.ABC):
     def update_receipt(self, diff: dict) -> Receipt:
         raise NotImplementedError
 
-    def delete_receipt(self, key: Receipt.key) -> None:
+    def delete_receipt(self, id_: Receipt.id) -> str:
         with Session(self.engine) as session:
-            stmt = delete(Receipt).where(Receipt.key == key)
-            session.execute(stmt)
+            stmt = (
+                delete(Receipt).where(Receipt.id == id_).returning(Receipt.storage_key)
+            )
+            return session.execute(stmt).one()[0]
 
     def create_tag(self, tag: Tag) -> Tag.id:
         with Session(self.engine) as session:
@@ -114,12 +117,19 @@ class DatabaseHook(abc.ABC):
 class FileHook(abc.ABC):
     """Base class for hooks that store image files."""
 
+    @staticmethod
+    def _make_key(original_name: str):
+        filename = Path(original_name)
+        now = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+        return f"{filename.stem} ({now}){filename.suffix}"
+
     @abc.abstractmethod
-    def save(self, image: bytes) -> str:
+    def save(self, image: bytes, original_name: str) -> str:
         """Saves an image
 
         Args:
             image: The bytes to save as an image
+            original_name: Filename of the uploaded image to generate a key from
         Returns:
             The string location to fetch the image later
         """

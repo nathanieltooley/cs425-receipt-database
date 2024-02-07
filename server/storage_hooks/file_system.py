@@ -13,9 +13,8 @@ class FileSystemHook(FileHook):
         self.file_path = config.file_path
         os.makedirs(self.file_path, exist_ok=True)
 
-    def save(self, image: bytes) -> str:
-        # ToDo: Find choose appropriate key, may require more params
-        key = datetime.now(UTC).isoformat(timespec="seconds")
+    def save(self, image: bytes, original_name: str) -> str:
+        key = self._make_key(original_name)
         with open(os.path.join(self.file_path, key), "wb+") as file:
             file.write(image)
         return key

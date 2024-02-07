@@ -76,11 +76,10 @@ def upload_receipt():
         im_bytes = b"".join(file.stream.readlines())
         file.close()
 
-        r_key = file_hook.save(im_bytes)
+        r_key = file_hook.save(im_bytes, filename)
 
         receipt = Receipt()
-        receipt.key = r_key
-        receipt.body = b""
+        receipt.storage_key = r_key
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
         meta_hook.save_objects(receipt)
@@ -91,38 +90,38 @@ def upload_receipt():
         return error_response(400, "Missing File", "No file has been sent.")
 
 
-@app.route("/api/receipt/view/<file_key>")
-def view_receipt(file_key: str):
+@app.route("/api/receipt/view/<int:id>")
+def view_receipt(id: int):
     """API Endpoint for viewing a receipt
 
     This endpoint returns the bytes of the image to the caller
 
     Args:
-        file_key: The AWS file name to view
+        id: The id of the receipt to view
     """
     receipt: Optional[Receipt] = None
 
     try:
-        receipt = meta_hook.fetch_receipt(file_key)
+        receipt = meta_hook.fetch_receipt(id)
     except botocore.exceptions.ClientError as error:
         if error.response["Error"]["Code"] == "NoSuchKey":
             return error_response(
                 400,
                 "No such key",
-                f"The key, {file_key}, was not found in the database",
+                f"The key, {id}, was not found in the database",
             )
 
     # If we made it this far, receipt can not be None so we should be able to safely type cast
     receipt = cast(Receipt, receipt)
 
-    raw_bytes = file_hook.fetch(receipt.key)
+    raw_bytes = file_hook.fetch(receipt.storage_key)
     # Convert receipt image into BytesIO object
     receipt_bytes = BytesIO(raw_bytes)
 
-    file = send_file(receipt_bytes, download_name=file_key)
+    file = send_file(receipt_bytes, download_name=receipt.storage_key)
     file.headers["Upload-Date"] = str(receipt.upload_dt)
     logging.info(
-        f"GET_KEY ENDPOINT: Returning file, {file_key}, to client. Size: {len(raw_bytes)};"
+        f"GET_KEY ENDPOINT: Returning file, {receipt.storage_key}, to client. Size: {len(raw_bytes)};"
     )
     logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
     return file
@@ -137,7 +136,7 @@ def fetch_receipt_keys():
     for r in receipts:
         response["results"].append(
             {
-                "key": r.key,
+                "id": r.id,
                 "metadata": {
                     "upload_dt": str(r.upload_dt),
                     "tags": [t.id for t in r.tags],
@@ -152,20 +151,17 @@ def fetch_receipt_keys():
     return Response(response_j_string, 200)
 
 
-@app.route("/api/receipt/delete/<file_key>")
-def delete_receipt(file_key: str):
+@app.route("/api/receipt/delete/<int:id>")
+def delete_receipt(id: int):
     """Deletes a receipt in the AWS bucket
 
     Args:
-        file_key: The AWS file name to delete
-
+        id: The id of the receipt to delete
     """
-    file_hook.delete(file_key)
+    storage_key = meta_hook.delete_receipt(id)
+    file_hook.delete(storage_key)
 
-    r = meta_hook.fetch_receipt(file_key)
-    meta_hook.delete_objects(r)
-
-    logging.info(f"DELETE ENDPOINT: Deleting {file_key}")
+    logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
     return response_code(200)
 
@@ -226,8 +222,7 @@ def delete_tag(tag_id: int):
     Args:
         tag_id: The  name to delete
     """
-    tag = meta_hook.fetch_tag(tag_id)
-    meta_hook.delete_objects(tag)
+    meta_hook.delete_tag(tag_id)
 
     logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
 

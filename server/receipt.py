@@ -34,7 +34,7 @@ receipt_tag = Table(
     "receipt_tag",
     Base.metadata,
     Column("tag_id", ForeignKey("tag.id"), primary_key=True),
-    Column("receipt_key", ForeignKey("receipt.key"), primary_key=True),
+    Column("receipt_key", ForeignKey("receipt.id"), primary_key=True),
 )
 
 
@@ -47,9 +47,8 @@ class Tag(Base):
 
 class Receipt(Base):
     __tablename__ = "receipt"
-
-    key: Mapped[str] = mapped_column(primary_key=True)
-    body: Mapped[bytes]
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    storage_key: Mapped[str]
     upload_dt: Mapped[datetime] = mapped_column(
         type_=TZDateTime, server_default=func.now()
     )

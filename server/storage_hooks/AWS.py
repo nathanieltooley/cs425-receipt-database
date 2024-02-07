@@ -28,9 +28,8 @@ class AWSS3Hook(FileHook):
         # ToDo: Configurable Bucket Name
         self.bucket_name = "cs425-3-test-bucket"
 
-    def save(self, image: bytes) -> str:
-        # ToDo: Find choose appropriate key, may require more params
-        key = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+    def save(self, image: bytes, original_name: str) -> str:
+        key = self._make_key(original_name)
         r = self.client.put_object(
             Bucket=self.bucket_name,
             Key=key,

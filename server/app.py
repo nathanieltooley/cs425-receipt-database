@@ -191,7 +191,7 @@ def fetch_tag(tag_id: int):
     response = {"result": {"id": tag.id, "name": tag.name}}
 
     response_j_string = json.dumps(response)
-    logging.info(f"FETCH_TAG ENDPOINT: Returning 1 tag")
+    logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
     logging.debug(f"FETCH_TAG ENDPOINT: Response: {response_j_string}")
 
     return Response(response_j_string, 200)

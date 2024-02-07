@@ -143,11 +143,10 @@ def fetch_receipt_keys():
             }
         )
 
-    response_j_string = json.dumps(response)
     logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
-    logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {response_j_string}")
+    logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
-    return Response(response_j_string, 200)
+    return Response(response, 200)
 
 
 @app.route("/api/receipt/delete/<int:id>")
@@ -207,11 +206,10 @@ def fetch_tags():
     for tag in tags:
         response["results"].append({"id": tag.id, "name": tag.name})
 
-    response_j_string = json.dumps(response)
     logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
-    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {response_j_string}")
+    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
 
-    return Response(response_j_string, 200)
+    return Response(response, 200)
 
 
 @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])

@@ -71,10 +71,12 @@ class DatabaseHook(abc.ABC):
     def update_receipt(self, diff: dict) -> Receipt:
         raise NotImplementedError
 
-    def delete_receipt(self, id_: Receipt.id) -> None:
+    def delete_receipt(self, id_: Receipt.id) -> str:
         with Session(self.engine) as session:
-            stmt = delete(Receipt).where(Receipt.id == id_)
-            session.execute(stmt)
+            stmt = (
+                delete(Receipt).where(Receipt.id == id_).returning(Receipt.storage_key)
+            )
+            return session.execute(stmt).one()[0]
 
     def create_tag(self, tag: Tag) -> Tag.id:
         with Session(self.engine) as session:

@@ -158,13 +158,10 @@ def delete_receipt(id: int):
     Args:
         id: The id of the receipt to delete
     """
+    storage_key = meta_hook.delete_receipt(id)
+    file_hook.delete(storage_key)
 
-    r = meta_hook.fetch_receipt(id)
-
-    file_hook.delete(r.storage_key)
-    meta_hook.delete_objects(r)
-
-    logging.info(f"DELETE ENDPOINT: Deleting Receipt{id}")
+    logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
     return response_code(200)
 
@@ -225,8 +222,7 @@ def delete_tag(tag_id: int):
     Args:
         tag_id: The  name to delete
     """
-    tag = meta_hook.fetch_tag(tag_id)
-    meta_hook.delete_objects(tag)
+    meta_hook.delete_tag(tag_id)
 
     logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
 

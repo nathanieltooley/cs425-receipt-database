@@ -90,25 +90,25 @@ def upload_receipt():
         return error_response(400, "Missing File", "No file has been sent.")
 
 
-@app.route("/api/receipt/view/<file_key>")
-def view_receipt(file_key: str):
+@app.route("/api/receipt/view/<int:id>")
+def view_receipt(id: int):
     """API Endpoint for viewing a receipt
 
     This endpoint returns the bytes of the image to the caller
 
     Args:
-        file_key: The AWS file name to view
+        id: The id of the receipt to view
     """
     receipt: Optional[Receipt] = None
 
     try:
-        receipt = meta_hook.fetch_receipt(file_key)
+        receipt = meta_hook.fetch_receipt(id)
     except botocore.exceptions.ClientError as error:
         if error.response["Error"]["Code"] == "NoSuchKey":
             return error_response(
                 400,
                 "No such key",
-                f"The key, {file_key}, was not found in the database",
+                f"The key, {id}, was not found in the database",
             )
 
     # If we made it this far, receipt can not be None so we should be able to safely type cast
@@ -121,7 +121,7 @@ def view_receipt(file_key: str):
     file = send_file(receipt_bytes, download_name=receipt.storage_key)
     file.headers["Upload-Date"] = str(receipt.upload_dt)
     logging.info(
-        f"GET_KEY ENDPOINT: Returning file, {file_key}, to client. Size: {len(raw_bytes)};"
+        f"GET_KEY ENDPOINT: Returning file, {receipt.storage_key}, to client. Size: {len(raw_bytes)};"
     )
     logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
     return file
@@ -151,20 +151,20 @@ def fetch_receipt_keys():
     return Response(response_j_string, 200)
 
 
-@app.route("/api/receipt/delete/<file_key>")
-def delete_receipt(file_key: str):
+@app.route("/api/receipt/delete/<int:id>")
+def delete_receipt(id: int):
     """Deletes a receipt in the AWS bucket
 
     Args:
-        file_key: The AWS file name to delete
-
+        id: The id of the receipt to delete
     """
-    file_hook.delete(file_key)
 
-    r = meta_hook.fetch_receipt(file_key)
+    r = meta_hook.fetch_receipt(id)
+
+    file_hook.delete(r.storage_key)
     meta_hook.delete_objects(r)
 
-    logging.info(f"DELETE ENDPOINT: Deleting {file_key}")
+    logging.info(f"DELETE ENDPOINT: Deleting Receipt{id}")
 
     return response_code(200)
 

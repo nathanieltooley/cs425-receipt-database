@@ -76,7 +76,7 @@ def upload_receipt():
         im_bytes = b"".join(file.stream.readlines())
         file.close()
 
-        r_key = file_hook.save(im_bytes)
+        r_key = file_hook.save(im_bytes, filename)
 
         receipt = Receipt()
         receipt.storage_key = r_key
@@ -118,7 +118,7 @@ def view_receipt(file_key: str):
     # Convert receipt image into BytesIO object
     receipt_bytes = BytesIO(raw_bytes)
 
-    file = send_file(receipt_bytes, download_name=file_key)
+    file = send_file(receipt_bytes, download_name=receipt.storage_key)
     file.headers["Upload-Date"] = str(receipt.upload_dt)
     logging.info(
         f"GET_KEY ENDPOINT: Returning file, {file_key}, to client. Size: {len(raw_bytes)};"

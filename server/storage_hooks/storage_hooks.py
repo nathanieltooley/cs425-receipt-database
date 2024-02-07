@@ -1,6 +1,7 @@
 import abc
 import datetime as dt
 import enum
+from pathlib import Path
 
 from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session, selectinload
@@ -114,12 +115,19 @@ class DatabaseHook(abc.ABC):
 class FileHook(abc.ABC):
     """Base class for hooks that store image files."""
 
+    @staticmethod
+    def _make_key(original_name: str):
+        filename = Path(original_name)
+        now = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+        return f"{filename.stem} ({now}){filename.suffix}"
+
     @abc.abstractmethod
-    def save(self, image: bytes) -> str:
+    def save(self, image: bytes, original_name: str) -> str:
         """Saves an image
 
         Args:
             image: The bytes to save as an image
+            original_name: Filename of the uploaded image to generate a key from
         Returns:
             The string location to fetch the image later
         """

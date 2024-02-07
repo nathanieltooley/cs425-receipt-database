@@ -59,35 +59,35 @@ def upload_receipt():
 
     file = request.files["file"]
 
+    if file is None:
+        logging.error("UPLOAD ENDPOINT: API client did not send file")
+        return error_response(400, "Missing File", "No file has been sent.")
+
     if file.filename == "":
         logging.error("UPLOAD ENDPOINT: API client sent file with no filename")
         return error_response(
             400, "Missing Filename", "The file has been sent but with no filename."
         )
 
-    logging.debug(request.form)
+    logging.debug(f"UPLOAD ENDPOINT: {request.form}")
     tags = request.form.getlist("tag", type=int)
 
-    if file:
-        filename = file.filename
-        filename = cast(str, filename)
+    filename = file.filename
+    filename = cast(str, filename)
 
-        # Read all bytes from file and join them into a single list
-        im_bytes = b"".join(file.stream.readlines())
-        file.close()
+    # Read all bytes from file and join them into a single list
+    im_bytes = b"".join(file.stream.readlines())
+    file.close()
 
-        r_key = file_hook.save(im_bytes, filename)
+    r_key = file_hook.save(im_bytes, filename)
 
-        receipt = Receipt()
-        receipt.storage_key = r_key
-        receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
+    receipt = Receipt()
+    receipt.storage_key = r_key
+    receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
-        meta_hook.save_objects(receipt)
-        logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
-        return response_code(200)
-    else:
-        logging.error("UPLOAD ENDPOINT: API client did not send file")
-        return error_response(400, "Missing File", "No file has been sent.")
+    meta_hook.save_objects(receipt)
+    logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
+    return response_code(200)
 
 
 @app.route("/api/receipt/view/<int:id>")
@@ -101,15 +101,14 @@ def view_receipt(id: int):
     """
     receipt: Optional[Receipt] = None
 
-    try:
-        receipt = meta_hook.fetch_receipt(id)
-    except botocore.exceptions.ClientError as error:
-        if error.response["Error"]["Code"] == "NoSuchKey":
-            return error_response(
-                400,
-                "No such key",
-                f"The key, {id}, was not found in the database",
-            )
+    receipt = meta_hook.fetch_receipt(id)
+
+    if receipt is None:
+        return error_response(
+            400,
+            "No such key",
+            f"The key, {id}, was not found in the database",
+        )
 
     # If we made it this far, receipt can not be None so we should be able to safely type cast
     receipt = cast(Receipt, receipt)

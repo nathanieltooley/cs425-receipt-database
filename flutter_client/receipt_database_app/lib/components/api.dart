@@ -40,23 +40,52 @@ class Api {
     }
   }
 
+  Future<List<String>> fetchTagsForReceipt(String receiptId) async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/tag/'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> tagsJson = json.decode(response.body)['results'];
+        final List<String> tags = [];
+
+        for (final tag in tagsJson) {
+          if (tag['id'] == receiptId) {
+            tags.add(tag['name']);
+          }
+        }
+
+        return tags;
+      } else {
+        throw Exception('Failed to fetch tags. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching tags: $e');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
     try {
       final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/fetch_many_keys'));
-
       if (response.statusCode == 200) {
-        final List<dynamic> results = json.decode(response.body)['results'];
+        final List<dynamic> receiptsJson = json.decode(response.body)['results'];
         
-        // Fetch details for each key and create a map
+        // Fetch details for each receipt and create a map
         final List<Map<String, dynamic>> receiptDataList = [];
-        for (final result in results) {
-          final String fileKey = result['key'];
-          final Uint8List imageData = await fetchReceiptData(fileKey);
+        for (final receiptJson in receiptsJson) {
+          final String receiptId = receiptJson['id'];
+          final List<dynamic> tagsJson = receiptJson['metadata']['tags'];
+
+          // Convert tag IDs to strings
+          final List<String> tags = tagsJson.map((tag) => tag.toString()).toList();
+
+          // Fetch image data for the receipt (assuming you have a method for this)
+          final Uint8List imageData = await fetchReceiptData(receiptId);
 
           // Create a map for the receipt data
           final Map<String, dynamic> receiptData = {
-            'title': fileKey, 
+            'title': receiptId, 
             'imageData': imageData,
+            'tags': tags,
             'imageUrl': 'placeholder_url', // placeholder
           };
 
@@ -72,4 +101,5 @@ class Api {
       throw Exception('Error fetching many receipts: $e');
     }
   }
+
 }

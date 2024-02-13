@@ -22,8 +22,6 @@ DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
 class SQLite3(DatabaseHook):
     """Connection to SQLite3"""
 
-    storage_version = "0.2.0"
-
     def __init__(self):
         super().__init__()
         self.config = CONFIG.SQLite3

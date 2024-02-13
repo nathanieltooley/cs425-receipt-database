@@ -85,9 +85,10 @@ def upload_receipt():
     receipt.storage_key = r_key
     receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
-    meta_hook.save_objects(receipt)
+    rid = meta_hook.create_receipt(receipt)
     logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
-    return response_code(200)
+
+    return {"id": rid}
 
 
 @app.route("/api/receipt/view/<int:id>")

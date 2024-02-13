@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from receipt import Receipt, Base, Tag
 
+UTC = dt.timezone.utc
+
 
 class ReceiptSort(enum.Enum):
     """Represents different methods to sort data."""
@@ -31,12 +33,11 @@ class DatabaseHook(abc.ABC):
                 session.delete(obj)
             session.commit()
 
-    def create_receipt(self, receipt: Receipt):
-        raise NotImplementedError
-        # with Session(self.engine) as session:
-        #     session.add(receipt)
-        #     session.commit()
-        #     return Receipt.id
+    def create_receipt(self, receipt: Receipt) -> int:
+        with Session(self.engine) as session:
+            session.add(receipt)
+            session.commit()
+            return receipt.id
 
     def fetch_receipt(self, id_: int) -> Receipt:
         stmt = select(Receipt).where(Receipt.id == id_)
@@ -78,7 +79,7 @@ class DatabaseHook(abc.ABC):
             )
             return session.execute(stmt).one()[0]
 
-    def create_tag(self, tag: Tag) -> Tag.id:
+    def create_tag(self, tag: Tag) -> int:
         with Session(self.engine) as session:
             session.add(tag)
             session.commit()
@@ -120,7 +121,7 @@ class FileHook(abc.ABC):
     @staticmethod
     def _make_key(original_name: str):
         filename = Path(original_name)
-        now = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+        now = dt.datetime.now(UTC).isoformat(timespec="seconds")
         return f"{filename.stem} ({now}){filename.suffix}"
 
     @abc.abstractmethod

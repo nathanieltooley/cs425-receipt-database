@@ -189,6 +189,11 @@ def upload_tag():
 def fetch_tag(tag_id: int):
     tag = meta_hook.fetch_tag(tag_id)
 
+    if tag is None:
+        return error_response(
+            404, "Tag Not Found", "The provided tag does not exists in the database"
+        )
+
     response = {"result": {"id": tag.id, "name": tag.name}}
 
     response_j_string = json.dumps(response)

@@ -53,4 +53,6 @@ class Receipt(Base):
     upload_dt: Mapped[datetime] = mapped_column(
         type_=TZDateTime, server_default=func.now()
     )
-    tags: Mapped[Sequence[Tag]] = relationship(secondary=receipt_tag)
+    tags: Mapped[Sequence[Tag]] = relationship(
+        secondary=receipt_tag, collection_class=list
+    )

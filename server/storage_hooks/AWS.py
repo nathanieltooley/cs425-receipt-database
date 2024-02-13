@@ -35,8 +35,10 @@ class AWSS3Hook(FileHook):
             Key=key,
             Body=image,
         )
-        if not r == 200:
-            raise RuntimeError(f"S3 return code {r} != 200")
+        if r["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            raise RuntimeError(
+                f"S3 return code {r['ResponseMetadata']['HTTPStatusCode']} != 200"
+            )
         return key
 
     def fetch(self, location: str) -> bytes:

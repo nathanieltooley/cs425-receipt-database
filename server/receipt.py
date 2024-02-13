@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Sequence
 
 from sqlalchemy import Column, ForeignKey, Table, TypeDecorator, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -52,4 +53,4 @@ class Receipt(Base):
     upload_dt: Mapped[datetime] = mapped_column(
         type_=TZDateTime, server_default=func.now()
     )
-    tags: Mapped[list[Tag]] = relationship(secondary=receipt_tag)
+    tags: Mapped[Sequence[Tag]] = relationship(secondary=receipt_tag)

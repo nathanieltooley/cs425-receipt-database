@@ -42,7 +42,7 @@ class Api {
 
   Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view_many'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/fetch_many_keys'));
 
       if (response.statusCode == 200) {
         final List<dynamic> results = json.decode(response.body)['results'];

@@ -5,7 +5,7 @@ import boto3
 import botocore.exceptions
 
 from receipt import Receipt
-from storage_hooks.storage_hooks import StorageHook, Sort
+from storage_hooks.storage_hooks import StorageHook, ReceiptSort, FileHook
 
 
 def init_script():
@@ -15,11 +15,11 @@ def init_script():
     import subprocess
 
     subprocess.run(["aws", "configure"])
-    hook = AWSHook()
+    hook = AWSS3Hook()
     hook.initialize_storage()
 
 
-class AWSHook(StorageHook):
+class AWSS3Hook(FileHook):
     """Connection to AWS Storage"""
 
     def __init__(self):
@@ -28,65 +28,39 @@ class AWSHook(StorageHook):
         # ToDo: Configurable Bucket Name
         self.bucket_name = "cs425-3-test-bucket"
 
-    def upload_receipt(self, receipt: Receipt) -> bool:
+    def save(self, image: bytes, original_name: str) -> str:
+        key = self._make_key(original_name)
         r = self.client.put_object(
             Bucket=self.bucket_name,
-            Key=receipt.key,
-            Body=receipt.body,
-            Metadata={"upload_date": receipt.upload_dt.isoformat(timespec="seconds")},
+            Key=key,
+            Body=image,
         )
-        return r == 200
+        if not r == 200:
+            raise RuntimeError(f"S3 return code {r} != 200")
+        return key
 
-    def fetch_receipt(self, identifier) -> Receipt:
+    def fetch(self, location: str) -> bytes:
         try:
-            obj = self.client.get_object(Bucket=self.bucket_name, Key=identifier)
+            obj = self.client.get_object(Bucket=self.bucket_name, Key=location)
             # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
-            data = obj.get("Body").read()
-            try:
-                upload_dt = dt.datetime.fromisoformat(
-                    obj.get("Metadata").get("upload_date")
-                )
-                return Receipt(identifier, data, upload_dt=upload_dt)
-            except (TypeError, ValueError):
-                # ToDo: This is for testing purposes,
-                #  this should be removed once bucket items all have the same metadata
-                return Receipt(identifier, data)
+            return obj.get("Body").read()
         except AttributeError:
             raise ValueError
 
-    def fetch_receipts(
-        self, limit: int = None, sort: Sort = Sort.newest
-    ) -> list[Receipt]:
-        max_keys = limit or 1000  # Amazon's default
-        response = self.client.list_objects_v2(
-            Bucket=self.bucket_name, MaxKeys=max_keys
+    def replace(self, location: str, image: bytes):
+        # ToDo: Check location exists
+        r = self.client.put_object(
+            Bucket=self.bucket_name,
+            Key=location,
+            Body=image,
         )
-        receipts = []
-        for receipt_meta in response.get("Contents"):
-            receipts.append(self.fetch_receipt(receipt_meta.get("Key")))
-        # ToDo: Sort
-        return receipts
+        if not r == 200:
+            raise RuntimeError(f"S3 return code {r} != 200")
 
-    def fetch_receipts_between(
-        self,
-        after: dt.datetime,
-        before: dt.datetime,
-        limit: int = None,
-        sort: Sort = Sort.newest,
-    ) -> list[Receipt]:
-        pass
-
-    def edit_receipt(self, receipt: Receipt) -> bool:
-        return self.upload_receipt(receipt)
-
-    def delete_receipt(self, receipt) -> bool:
-        r = self.client.delete_object(Bucket=self.bucket_name, Key=receipt.key)
-        return r["ResponseMetadata"]["HTTPStatusCode"] == 204
-
-    @property
-    def storage_version(self) -> str:
-        """Return scheme version the database is using."""
-        return "0.1.0"
+    def delete(self, location: str):
+        r = self.client.delete_object(Bucket=self.bucket_name, Key=location)
+        if (r_code := r["ResponseMetadata"]["HTTPStatusCode"]) != 204:
+            raise RuntimeError(f"S3 return code {r_code} != 204")
 
     def initialize_storage(self):
         """Initialize storage / database with current scheme."""

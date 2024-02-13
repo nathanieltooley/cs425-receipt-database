@@ -1,17 +1,12 @@
-# Amazon
-boto3 ~= 1.28.63
+# Developement
+black ~= 23.9.1  # Style Consistency
+pytest ~= 8.0.0 # Testing
 
-# Style Consistency
-black ~= 23.9.1
+# Core
+flask ~= 3.0.0  # API Runner
+SQLAlchemy ~= 2.0.25  # Database Runner
+platformdirs ~= 4.1.0  # Platform Specific Directories
+pydantic ~= 2.5.3  # Configuration File Verification
 
-# Flask
-flask ~= 3.0.0
-
-# Directories
-platformdirs ~= 4.1.0
-
-# SQL
-SQLAlchemy ~= 2.0.25
-
-# Pydantic
-pydantic ~= 2.5.3
+# Hooks
+boto3 ~= 1.28.63  # Amazon S3 Buckets

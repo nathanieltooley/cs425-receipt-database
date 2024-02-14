@@ -102,7 +102,7 @@ class TestFileHook:
     def file_system_hook(self) -> FileSystemHook:
         return FileSystemHook()
 
-    @pytest.fixture(params=[FileSystemHook])
+    @pytest.fixture(params=[FileSystemHook, AWSS3Hook])
     def hook(self, request) -> FileHook:
         return request.param()
 

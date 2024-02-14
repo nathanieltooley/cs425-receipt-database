@@ -18,6 +18,13 @@ class TestDatabaseHook:
         hook.initialize_storage()
         return hook
 
+    @pytest.fixture
+    def tag(self, hook) -> tuple[int, Tag]:
+        tag = Tag(name="test_tag")
+        hook.create_tag(tag)
+        yield tag.id, tag
+        hook.delete_objects(tag)
+
     @pytest.fixture(params=[i for i in range(4)])
     def tags(self, request, hook) -> list[Tag]:
         tags = []
@@ -59,11 +66,23 @@ class TestDatabaseHook:
         assert hook.delete_receipt(r_id) == receipt.storage_key
         assert hook.fetch_receipt(r_id) is None
 
-    # create_tag
-    # fetch_tag
-    # fetch_tags
-    # update_tag
-    # delete_tag
+    def test_fetch_tag(self, hook, tag):
+        t_id, tag = tag
+        # ToDo: add an __eq__ magic method to Tag
+        assert hook.fetch_tag(t_id).name == tag.name
+
+    def test_fetch_tags(self, hook, tags):
+        tag_ids = [t.id for t in tags]
+        tag_names = [t.name for t in tags]
+        for tag in hook.fetch_tags(tag_ids):
+            assert tag.name in tag_names
+
+    # def test_update_tag(self, hook, tags):
+
+    def test_delete_tag(self, hook, tag):
+        t_id, tag = tag
+        hook.delete_tag(t_id)
+        assert hook.fetch_tag(t_id) is None
 
 
 class TestFileHook:

@@ -80,7 +80,9 @@ class DatabaseHook(abc.ABC):
             stmt = (
                 delete(Receipt).where(Receipt.id == id_).returning(Receipt.storage_key)
             )
-            return session.execute(stmt).one()[0]
+            key = session.execute(stmt).one()[0]
+            session.commit()
+            return key
 
     def create_tag(self, tag: Tag) -> int:
         with Session(self.engine) as session:
@@ -107,6 +109,7 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             stmt = delete(Tag).where(Tag.id == tag_id)
             session.execute(stmt)
+            session.commit()
 
     # @property
     # @abc.abstractmethod

@@ -60,6 +60,7 @@ class TestDatabaseHook:
 
         # fetched.tags and receipts.tags aren't loaded...
         # assert len(fetched.tags) == len(receipt.tags)
+        # assert all(t in fetched.tags for t in receipt.tags)
         # ToDo: Validate that all tags match
 
     # fetch_receipts
@@ -74,14 +75,13 @@ class TestDatabaseHook:
 
     def test_fetch_tag(self, hook, tag):
         t_id, tag = tag
-        # ToDo: add an __eq__ magic method to Tag
-        assert hook.fetch_tag(t_id).name == tag.name
+        assert hook.fetch_tag(t_id) == tag
 
     def test_fetch_tags(self, hook, tags):
-        tag_ids = [t.id for t in tags]
-        tag_names = [t.name for t in tags]
-        for tag in hook.fetch_tags(tag_ids):
-            assert tag.name in tag_names
+        fetched = hook.fetch_tags([t.id for t in tags])
+        assert len(fetched) == len(tags)
+        for tag in fetched:
+            assert tag in tags
 
     # def test_update_tag(self, hook, tags):
 

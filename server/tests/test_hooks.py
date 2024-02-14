@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from receipt import Receipt, Tag
@@ -23,7 +25,9 @@ class TestDatabaseHook:
         tag = Tag(name="test_tag")
         hook.create_tag(tag)
         yield tag.id, tag
-        hook.delete_objects(tag)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hook.delete_objects(tag)
 
     @pytest.fixture(params=[i for i in range(4)])
     def tags(self, request, hook) -> list[Tag]:
@@ -42,7 +46,9 @@ class TestDatabaseHook:
     def receipt(self, hook, tags) -> tuple[int, Receipt]:
         receipt = Receipt(storage_key="where?", tags=tags)
         yield hook.create_receipt(receipt), receipt
-        hook.delete_objects(receipt)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hook.delete_objects(receipt)
 
     def test_fetch_receipt(self, hook, receipt):
         r_id, receipt = receipt

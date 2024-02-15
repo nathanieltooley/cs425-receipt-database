@@ -30,7 +30,7 @@ class Api {
     }
   }
 
-  Future<Uint8List> fetchReceiptData(String fileKey) async {
+  Future<Uint8List> fetchReceiptData(int fileKey) async {
     final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view/$fileKey'));
 
     if (response.statusCode == 200) {
@@ -72,7 +72,7 @@ class Api {
         // Fetch details for each receipt and create a map
         final List<Map<String, dynamic>> receiptDataList = [];
         for (final receiptJson in receiptsJson) {
-          final String receiptId = receiptJson['id'];
+          final int receiptId = receiptJson['id'];
           final List<dynamic> tagsJson = receiptJson['metadata']['tags'];
 
           // Convert tag IDs to strings

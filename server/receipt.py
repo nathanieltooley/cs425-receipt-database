@@ -45,6 +45,11 @@ class Tag(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str]
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Tag):
+            return NotImplemented
+        return self.id == other.id and self.name == other.name
+
 
 class Receipt(Base):
     __tablename__ = "receipt"
@@ -56,3 +61,8 @@ class Receipt(Base):
     tags: Mapped[Sequence[Tag]] = relationship(
         secondary=receipt_tag, collection_class=list
     )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Receipt):
+            return NotImplemented
+        return self.id == other.id and self.storage_key == other.storage_key

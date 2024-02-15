@@ -7,6 +7,9 @@ from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session, selectinload
 
 from receipt import Receipt, Base, Tag
+from typing import Optional, Sequence
+
+UTC = dt.timezone.utc
 
 
 class ReceiptSort(enum.Enum):
@@ -17,6 +20,8 @@ class ReceiptSort(enum.Enum):
 
 
 class DatabaseHook(abc.ABC):
+    storage_version = "0.2.0"
+
     def __init__(self):
         self.engine: Engine = NotImplemented
 
@@ -31,27 +36,26 @@ class DatabaseHook(abc.ABC):
                 session.delete(obj)
             session.commit()
 
-    def create_receipt(self, receipt: Receipt):
-        raise NotImplementedError
-        # with Session(self.engine) as session:
-        #     session.add(receipt)
-        #     session.commit()
-        #     return Receipt.id
+    def create_receipt(self, receipt: Receipt) -> int:
+        with Session(self.engine) as session:
+            session.add(receipt)
+            session.commit()
+            return receipt.id
 
-    def fetch_receipt(self, id_: int) -> Receipt:
+    def fetch_receipt(self, id_: int) -> Optional[Receipt]:
         stmt = select(Receipt).where(Receipt.id == id_)
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
     def fetch_receipts(
         self,
-        after: dt.datetime = None,
-        before: dt.datetime = None,
-        tags: list[Tag] = None,
+        after: Optional[dt.datetime] = None,
+        before: Optional[dt.datetime] = None,
+        tags: Optional[list[Tag]] = None,
         match_all_tags: bool = False,
-        limit: int = None,
+        limit: Optional[int] = None,
         sort: ReceiptSort = ReceiptSort.newest,
-    ) -> list[Receipt]:
+    ) -> Sequence[Receipt]:
         stmt = select(Receipt).options(selectinload(Receipt.tags)).order_by(sort.value)
         if after is not None:
             stmt = stmt.where(after < Receipt.upload_dt)
@@ -71,25 +75,25 @@ class DatabaseHook(abc.ABC):
     def update_receipt(self, diff: dict) -> Receipt:
         raise NotImplementedError
 
-    def delete_receipt(self, id_: Receipt.id) -> str:
+    def delete_receipt(self, id_: int) -> str:
         with Session(self.engine) as session:
             stmt = (
                 delete(Receipt).where(Receipt.id == id_).returning(Receipt.storage_key)
             )
             return session.execute(stmt).one()[0]
 
-    def create_tag(self, tag: Tag) -> Tag.id:
+    def create_tag(self, tag: Tag) -> int:
         with Session(self.engine) as session:
             session.add(tag)
             session.commit()
             return tag.id
 
-    def fetch_tag(self, tag_id: int) -> Tag:
+    def fetch_tag(self, tag_id: int) -> Optional[Tag]:
         stmt = select(Tag).where(Tag.id == tag_id)
         with Session(self.engine) as session:
             return session.scalar(stmt)
 
-    def fetch_tags(self, tag_ids: list[int] = None) -> list[Tag]:
+    def fetch_tags(self, tag_ids: Optional[list[int]] = None) -> Sequence[Tag]:
         with Session(self.engine) as session:
             stmt = select(Tag)
             if tag_ids is not None:
@@ -99,15 +103,15 @@ class DatabaseHook(abc.ABC):
     def update_tag(self, diff: dict) -> Tag:
         raise NotImplementedError
 
-    def delete_tag(self, tag_id: Tag.id) -> None:
+    def delete_tag(self, tag_id: int) -> None:
         with Session(self.engine) as session:
             stmt = delete(Tag).where(Tag.id == tag_id)
             session.execute(stmt)
 
-    @property
-    @abc.abstractmethod
-    def storage_version(self) -> str:
-        """Return scheme version the database is using."""
+    # @property
+    # @abc.abstractmethod
+    # def storage_version(self) -> str:
+    #     """Return scheme version the database is using."""
 
     def initialize_storage(self):
         """Initialize storage / database with current scheme."""
@@ -120,7 +124,7 @@ class FileHook(abc.ABC):
     @staticmethod
     def _make_key(original_name: str):
         filename = Path(original_name)
-        now = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+        now = dt.datetime.now(UTC).isoformat(timespec="seconds")
         return f"{filename.stem} ({now}){filename.suffix}"
 
     @abc.abstractmethod
@@ -204,7 +208,7 @@ class StorageHook(abc.ABC):
 
     @abc.abstractmethod
     def fetch_receipts(
-        self, limit: int = None, sort: ReceiptSort = ReceiptSort.newest
+        self, limit: Optional[int] = None, sort: ReceiptSort = ReceiptSort.newest
     ) -> list[Receipt]:
         """Fetch multiple receipts from storage.
 
@@ -222,7 +226,7 @@ class StorageHook(abc.ABC):
         self,
         after: dt.datetime,
         before: dt.datetime,
-        limit: int = None,
+        limit: Optional[int] = None,
         sort: ReceiptSort = ReceiptSort.newest,
     ) -> list[Receipt]:
         """Fetch receipts dated between `before` and `after` from storage.

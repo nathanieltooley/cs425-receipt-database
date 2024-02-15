@@ -42,6 +42,7 @@ class AWSS3Hook(FileHook):
         return key
 
     def fetch(self, location: str) -> bytes:
+        print(location)
         try:
             obj = self.client.get_object(Bucket=self.bucket_name, Key=location)
             # data['ResponseMetadata']['HTTPStatusCode'] should equal 200

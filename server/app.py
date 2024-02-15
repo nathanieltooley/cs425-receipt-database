@@ -158,7 +158,10 @@ def delete_receipt(id: int):
         id: The id of the receipt to delete
     """
     storage_key = meta_hook.delete_receipt(id)
-    file_hook.delete(storage_key)
+    try:
+        file_hook.delete(storage_key)
+    except FileNotFoundError:
+        pass
 
     logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 

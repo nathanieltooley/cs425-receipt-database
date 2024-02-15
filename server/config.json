@@ -1,1 +1,6 @@
-{}
+{
+    "StorageHooks": {
+      "file_hook": "AWS",
+        "meta_hook": "SQLite3"
+    }
+}

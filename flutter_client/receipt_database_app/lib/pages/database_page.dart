@@ -76,33 +76,45 @@ class _MyListViewState extends State<MyListView> {
           child: ListView.builder(
             itemCount: filteredReceipts.length,
             itemBuilder: (context, index) {
-              final title = filteredReceipts[index]['title'] as String;
-              final imageData = filteredReceipts[index]['imageData'] as Uint8List;
+            final title = filteredReceipts[index]['title'] as String;
+            final List<String> tags = filteredReceipts[index]['tags'] as List<String>;
+            final imageData = filteredReceipts[index]['imageData'] as Uint8List;
 
-              return Card(
-                elevation: 5,
-                margin: const EdgeInsets.all(8),
-                child: ListTile(
-                  title: Text(title),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReceiptDetailPage(
-                          title: title,
-                          imageData: imageData,
-                        ),
-                      ),
-                    );
-                  },
-                  leading: CachedNetworkImage(
-                    imageUrl: filteredReceipts[index]['imageUrl'] as String,
-                    placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
-                  ),
+            return Card(
+              elevation: 5,
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title),
+                    SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: tags.map((tag) => Chip(label: Text(tag))).toList(),
+                    ),
+                  ],
                 ),
-              );
-            },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ReceiptDetailPage(
+                        title: title,
+                        imageData: imageData,
+                      ),
+                    ),
+                  );
+                },
+                leading: CachedNetworkImage(
+                  imageUrl: filteredReceipts[index]['imageUrl'] as String,
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
+                ),
+              ),
+            );
+          },
           ),
         ),
       ],

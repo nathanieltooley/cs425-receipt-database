@@ -49,19 +49,42 @@ class AWSS3Hook(FileHook):
             return obj.get("Body").read()
         except AttributeError:
             raise ValueError
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError
+            raise
 
     def replace(self, location: str, image: bytes):
-        # ToDo: Check location exists
+        try:
+            self.client.head_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                raise FileNotFoundError
+            raise
+
         r = self.client.put_object(
             Bucket=self.bucket_name,
             Key=location,
             Body=image,
         )
-        if not r == 200:
+        if r["ResponseMetadata"]["HTTPStatusCode"] != 200:
             raise RuntimeError(f"S3 return code {r} != 200")
 
     def delete(self, location: str):
-        r = self.client.delete_object(Bucket=self.bucket_name, Key=location)
+        try:
+            self.client.head_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                raise FileNotFoundError
+            raise
+
+        try:
+            r = self.client.delete_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError
+            else:
+                raise RuntimeError
         if (r_code := r["ResponseMetadata"]["HTTPStatusCode"]) != 204:
             raise RuntimeError(f"S3 return code {r_code} != 204")
 

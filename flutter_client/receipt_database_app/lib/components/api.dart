@@ -72,14 +72,15 @@ class Api {
         // Fetch details for each receipt and create a map
         final List<Map<String, dynamic>> receiptDataList = [];
         for (final receiptJson in receiptsJson) {
-          final int receiptId = receiptJson['id'];
+          int tempReceiptId = receiptJson['id'];
+          final String receiptId = tempReceiptId.toString();
           final List<dynamic> tagsJson = receiptJson['metadata']['tags'];
 
           // Convert tag IDs to strings
           final List<String> tags = tagsJson.map((tag) => tag.toString()).toList();
 
           // Fetch image data for the receipt (assuming you have a method for this)
-          final Uint8List imageData = await fetchReceiptData(receiptId);
+          final Uint8List imageData = await fetchReceiptData(tempReceiptId);
 
           // Create a map for the receipt data
           final Map<String, dynamic> receiptData = {

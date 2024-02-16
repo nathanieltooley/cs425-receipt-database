@@ -1,6 +1,7 @@
 # Developement
 black ~= 23.9.1  # Style Consistency
 pytest ~= 8.0.0 # Testing
+pytest-mock ~= 3.12.0
 
 # Core
 flask ~= 3.0.0  # API Runner

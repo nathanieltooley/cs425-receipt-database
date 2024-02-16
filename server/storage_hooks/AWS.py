@@ -24,7 +24,11 @@ class AWSS3Hook(FileHook):
 
     def __init__(self):
         super().__init__()
-        self.client = boto3.client("s3")
+        self.client = boto3.client(
+            "s3",
+            aws_access_key_id=None,  # Key as str or None (not empty str)
+            aws_secret_access_key=None,  # Ditto
+        )
         # ToDo: Configurable Bucket Name
         self.bucket_name = "cs425-3-test-bucket"
 

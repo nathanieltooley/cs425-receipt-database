@@ -51,7 +51,7 @@ def response_code(status: int) -> Response:
     return Response("", status=status, mimetype="application/json")
 
 
-@app.route("/api/receipt/upload", methods=["POST"])
+@app.route("/api/receipt/", methods=["POST"])
 def upload_receipt():
     """API Endpoint for uploading a receipt image"""
     if "file" not in request.files:
@@ -91,7 +91,7 @@ def upload_receipt():
     return {"id": rid}
 
 
-@app.route("/api/receipt/view/<int:id>")
+@app.route("/api/receipt/<int:id>/image")
 def view_receipt(id: int):
     """API Endpoint for viewing a receipt
 
@@ -127,7 +127,7 @@ def view_receipt(id: int):
     return file
 
 
-@app.route("/api/receipt/fetch_many_keys")
+@app.route("/api/receipt/")
 def fetch_receipt_keys():
     receipts = meta_hook.fetch_receipts()
 
@@ -150,7 +150,7 @@ def fetch_receipt_keys():
     return response
 
 
-@app.route("/api/receipt/delete/<int:id>")
+@app.route("/api/receipt/<int:id>", methods=["DELETE"])
 def delete_receipt(id: int):
     """Deletes a receipt in the AWS bucket
 

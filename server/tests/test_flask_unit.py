@@ -55,3 +55,5 @@ def test_upload_receipt(test_client: FlaskClient, mocker):
     assert response.status == "200 OK"
     assert response_json["id"] == 1
     assert fs_save_patch.call_count == 1
+
+    fs_save_patch.assert_called_once_with(b"", "test.jpg")

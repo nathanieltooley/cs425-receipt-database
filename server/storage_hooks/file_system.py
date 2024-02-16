@@ -8,7 +8,6 @@ class FileSystemHook(FileHook):
     def __init__(self):
         config = CONFIG.FileSystem
         self.file_path = config.file_path
-        os.makedirs(self.file_path, exist_ok=True)
 
     def save(self, image: bytes, original_name: str) -> str:
         key = self._make_key(original_name)
@@ -34,3 +33,6 @@ class FileSystemHook(FileHook):
         if not os.path.exists(r_path):
             raise FileNotFoundError(r_path)
         os.remove(r_path)
+
+    def initialize_storage(self):
+        os.makedirs(self.file_path, exist_ok=True)

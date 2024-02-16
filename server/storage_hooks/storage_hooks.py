@@ -111,11 +111,6 @@ class DatabaseHook(abc.ABC):
             session.execute(stmt)
             session.commit()
 
-    # @property
-    # @abc.abstractmethod
-    # def storage_version(self) -> str:
-    #     """Return scheme version the database is using."""
-
     def initialize_storage(self):
         """Initialize storage / database with current scheme."""
         Base.metadata.create_all(self.engine)
@@ -177,6 +172,10 @@ class FileHook(abc.ABC):
         Raises:
             FileNotFoundError: When the location doesn't exist
         """
+
+    @abc.abstractmethod
+    def initialize_storage(self):
+        """Preform hook one time setup steps"""
 
 
 class StorageHook(abc.ABC):

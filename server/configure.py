@@ -1,13 +1,14 @@
 import argparse
-import importlib
 import json
 import os
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Literal
-from pydantic import TypeAdapter, ValidationError
+from typing import Literal
+from pydantic import TypeAdapter
 
 import platformdirs
+
+from storage_hooks.hook_config_factory import get_meta_hook
 
 CURRENT_VERSION = "0.1.0-1.0"
 DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
@@ -92,16 +93,27 @@ def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser("Receipt Database Configuration")
     subparsers = parser.add_subparsers(dest="cmd")
 
-    # Options to initialize a new database
-    initialize = subparsers.add_parser("initialize", help="Initialize a new database.")
-    initialize.add_argument("service", choices=["SQLite3", "AWS"])
-
-    # Options to migrate services or versions
-    migration = subparsers.add_parser(
-        "migrate", help="Migrate database to different service or version."
+    # Options for the config file(s)
+    file = subparsers.add_parser("file", help="Manage config file(s)")
+    file_parsers = file.add_subparsers(dest="file_cmd")
+    file_create = file_parsers.add_parser("create", help="Create a default config file")
+    file_create.add_argument(
+        "--path", default="config.json", help="Path to create config file"
     )
-    migration.add_argument("service", choices=["SQLite3", "AWS"])
+    file_parsers.add_parser("list", help="List the paths checked for config files")
 
+    # Options to initialize (a) hook(s)
+    initialize = subparsers.add_parser(
+        "initialize", help="Initialize hooks (based on config files)"
+    )
+    initialize.add_argument("hook", choices=["file", "meta", "both"])
+    initialize.add_argument(
+        "--clean",
+        action="store_true",
+        help="Remove most existing data. "
+        "This will help ensure proper setup, "
+        "but results in loss of previous data.",
+    )
     return parser
 
 
@@ -110,13 +122,21 @@ def main():
     args = parser.parse_args()
     print(args)
     match args.cmd:
+        case "file":
+            match args.file_cmd:
+                case "create":
+                    pass
+                case "list":
+                    pass
+                case _:
+                    raise ValueError
         case "initialize":
-            module = importlib.import_module(f"storage_hooks.{args.service}")
-            print(module)
-            module.init_script()
-        case "migrate":
-            pass
-    pass
+            if args.hook in {"meta", "both"}:
+                get_meta_hook(CONFIG.StorageHooks.meta_hook).initialize_storage()
+            if args.hook in {"file", "both"}:
+                get_meta_hook(CONFIG.StorageHooks.file_hook).initialize_storage()
+        case _:
+            raise ValueError
 
 
 if __name__ == "__main__":

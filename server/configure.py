@@ -8,8 +8,6 @@ from pydantic import TypeAdapter
 
 import platformdirs
 
-from storage_hooks.hook_config_factory import get_meta_hook
-
 CURRENT_VERSION = "0.1.0-1.0"
 DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
 
@@ -127,14 +125,18 @@ def main():
                 case "create":
                     pass
                 case "list":
-                    pass
+                    print(os.path.normpath("./config"))
+                    print(CONFIG.DEFAULT_FILE_PATH)
                 case _:
                     raise ValueError
         case "initialize":
+            from storage_hooks.hook_config_factory import get_meta_hook
+            from storage_hooks.hook_config_factory import get_file_hook
+
             if args.hook in {"meta", "both"}:
                 get_meta_hook(CONFIG.StorageHooks.meta_hook).initialize_storage()
             if args.hook in {"file", "both"}:
-                get_meta_hook(CONFIG.StorageHooks.file_hook).initialize_storage()
+                get_file_hook(CONFIG.StorageHooks.file_hook).initialize_storage()
         case _:
             raise ValueError
 

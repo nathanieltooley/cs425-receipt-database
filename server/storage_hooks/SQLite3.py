@@ -1,22 +1,9 @@
 import os.path
 
-import platformdirs
 from sqlalchemy import create_engine
 
 from configure import CONFIG
 from storage_hooks.storage_hooks import DatabaseHook
-
-CONFIG_KEY = "SQLite3"
-DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
-
-
-# def init_script():
-#     """Script to initialize SQLite3 Database."""
-#     CONFIG[CONFIG_KEY] = DEFAULT_SETTINGS.copy()
-#     print(CONFIG[CONFIG_KEY])
-#     CONFIG.save(make_backup=True)
-#     hook = SQLite3()
-#     hook.initialize_storage()
 
 
 class SQLite3(DatabaseHook):

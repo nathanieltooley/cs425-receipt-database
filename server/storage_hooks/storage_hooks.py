@@ -111,13 +111,14 @@ class DatabaseHook(abc.ABC):
             session.execute(stmt)
             session.commit()
 
-    # @property
-    # @abc.abstractmethod
-    # def storage_version(self) -> str:
-    #     """Return scheme version the database is using."""
+    def initialize_storage(self, clean: bool = True):
+        """Initialize storage / database with current scheme.
 
-    def initialize_storage(self):
-        """Initialize storage / database with current scheme."""
+        Args:
+            clean: Delete any existing data that may be present
+        """
+        if clean:
+            Base.metadata.drop_all(self.engine)
         Base.metadata.create_all(self.engine)
 
 
@@ -176,6 +177,14 @@ class FileHook(abc.ABC):
 
         Raises:
             FileNotFoundError: When the location doesn't exist
+        """
+
+    @abc.abstractmethod
+    def initialize_storage(self, clean: bool = False):
+        """Perform hook one time setup steps
+
+        Args:
+            clean: Delete any existing data that may be present
         """
 
 

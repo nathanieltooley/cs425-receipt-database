@@ -1,10 +1,7 @@
-from datetime import datetime, timezone
 import os
 
 from configure import CONFIG
 from storage_hooks.storage_hooks import FileHook
-
-UTC = timezone.utc
 
 
 class FileSystemHook(FileHook):

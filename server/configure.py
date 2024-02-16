@@ -134,9 +134,13 @@ def main():
             from storage_hooks.hook_config_factory import get_file_hook
 
             if args.hook in {"meta", "both"}:
-                get_meta_hook(CONFIG.StorageHooks.meta_hook).initialize_storage()
+                get_meta_hook(CONFIG.StorageHooks.meta_hook).initialize_storage(
+                    args.clean
+                )
             if args.hook in {"file", "both"}:
-                get_file_hook(CONFIG.StorageHooks.file_hook).initialize_storage()
+                get_file_hook(CONFIG.StorageHooks.file_hook).initialize_storage(
+                    args.clean
+                )
         case _:
             raise ValueError
 

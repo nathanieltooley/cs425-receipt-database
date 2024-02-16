@@ -111,8 +111,14 @@ class DatabaseHook(abc.ABC):
             session.execute(stmt)
             session.commit()
 
-    def initialize_storage(self):
-        """Initialize storage / database with current scheme."""
+    def initialize_storage(self, clean: bool = True):
+        """Initialize storage / database with current scheme.
+
+        Args:
+            clean: Delete any existing data that may be present
+        """
+        if clean:
+            Base.metadata.drop_all(self.engine)
         Base.metadata.create_all(self.engine)
 
 
@@ -174,8 +180,12 @@ class FileHook(abc.ABC):
         """
 
     @abc.abstractmethod
-    def initialize_storage(self):
-        """Preform hook one time setup steps"""
+    def initialize_storage(self, clean: bool = False):
+        """Perform hook one time setup steps
+
+        Args:
+            clean: Delete any existing data that may be present
+        """
 
 
 class StorageHook(abc.ABC):

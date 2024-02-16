@@ -6,17 +6,6 @@ import botocore.exceptions
 from storage_hooks.storage_hooks import FileHook
 
 
-def init_script():
-    """Script to initialize AWSHook."""
-    # ToDo: Configure AWS Hook locally. I.e. use a `botocore.config.Config`
-    # another option would to be internally set the environment variables boto3 uses
-    import subprocess
-
-    subprocess.run(["aws", "configure"])
-    hook = AWSS3Hook()
-    hook.initialize_storage()
-
-
 class AWSS3Hook(FileHook):
     """Connection to AWS Storage"""
 
@@ -86,7 +75,15 @@ class AWSS3Hook(FileHook):
         if (r_code := r["ResponseMetadata"]["HTTPStatusCode"]) != 204:
             raise RuntimeError(f"S3 return code {r_code} != 204")
 
-    def initialize_storage(self):
+    def _delete_all(self):
+        """Deletes all objects from the bucket"""
+        objects = self.client.list_objects_v2(Bucket=self.bucket_name)
+        formatted = [{"Key": obj["Key"]} for obj in objects["Contents"]]
+        self.client.delete_objects(
+            Bucket=self.bucket_name, Delete={"Objects": formatted}
+        )
+
+    def initialize_storage(self, clean: bool = False):
         """Initialize storage / database with current scheme."""
         try:
             _r = self.client.head_bucket(Bucket=self.bucket_name)
@@ -99,8 +96,9 @@ class AWSS3Hook(FileHook):
                 case _:
                     raise
         else:
+            if clean:
+                self._delete_all()
             return
-
         try:
             _r = self.client.create_bucket(Bucket=self.bucket_name)
         except botocore.exceptions.ClientError as e:

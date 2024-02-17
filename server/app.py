@@ -24,6 +24,11 @@ file_hook = get_file_hook(CONFIG.StorageHooks.file_hook)
 meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
 
 
+@app.errorhandler(FileNotFoundError)
+def code_404(_e) -> Response:
+    return response_code(404)
+
+
 def error_response(status: int, error_name: str, error_message: str) -> Response:
     """Create and return a Flask Response object that contains error information
 
@@ -106,7 +111,7 @@ def view_receipt(id: int):
 
     if receipt is None:
         return error_response(
-            400,
+            404,
             "No such key",
             f"The key, {id}, was not found in the database",
         )
@@ -114,7 +119,9 @@ def view_receipt(id: int):
     # If we made it this far, receipt can not be None so we should be able to safely type cast
     receipt = cast(Receipt, receipt)
 
+    # FileNotFoundError will be converted to 404 by flask
     raw_bytes = file_hook.fetch(receipt.storage_key)
+
     # Convert receipt image into BytesIO object
     receipt_bytes = BytesIO(raw_bytes)
 
@@ -150,14 +157,11 @@ def delete_receipt(id: int):
         id: The id of the receipt to delete
     """
     storage_key = meta_hook.delete_receipt(id)
-    try:
-        file_hook.delete(storage_key)
-    except FileNotFoundError:
-        pass
+    file_hook.delete(storage_key)
 
     logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
-    return response_code(200)
+    return response_code(204)
 
 
 @app.route("/api/tag/", methods=["POST"])
@@ -223,4 +227,4 @@ def delete_tag(tag_id: int):
 
     logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
 
-    return response_code(200)
+    return response_code(204)

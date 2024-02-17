@@ -134,6 +134,22 @@ def view_receipt(id: int):
     return file
 
 
+@app.route("/api/receipt/<int:id>/")
+def fetch_receipt(id: int):
+    """API Endpoint for viewing receipt metadata
+
+    Args:
+        id: The id of the receipt to fetch
+    """
+    if (receipt := meta_hook.fetch_receipt(id)) is None:
+        return error_response(
+            404,
+            "No image found",
+            f"The key, {id}, was not found in the database",
+        )
+    return receipt.export()
+
+
 @app.route("/api/receipt/")
 def fetch_receipt_keys():
     receipts = meta_hook.fetch_receipts()

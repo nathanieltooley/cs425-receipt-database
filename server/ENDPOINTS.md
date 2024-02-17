@@ -76,7 +76,7 @@ These JSON structures are sent in multiple places.
 {
     "id": <id>,  // Integer
     "name": <name>,  // String
-    "upload_dt": <upload_dt>,  // UTC, "%Y-%m-%d %H:%M:%S"
+    "upload_dt": <upload_dt>,  // UTC, ~ISO Format
     "tags": [<tag_id>, ...],  // List of Integer
 }
 ```

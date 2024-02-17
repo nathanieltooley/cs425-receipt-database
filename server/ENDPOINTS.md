@@ -1,22 +1,26 @@
 # Overview
 
 ## All Endpoints
-- `/api/receipt/fetch_many_keys`
-  - `GET`: [Fetch Many Keys](#fetch-many-keys)
-- `/api/receipt/upload`
-  - `POST`: [Receipt Upload](#upload)
-- `/api/receipt/view/<file_key>`
-  - `GET`: [View Receipt](#view-receipt)
-- `/api/receipt/delete/<file_key>`
-  - `GET`: [Delete Receipt](#delete)
-- `/api/tag/fetch_all`
-  - `GET`: [Fetch All](#fetch-all-tags)
-- `/api/tag/add/<tag_name>`
-  - `POST`: [Add Tag](#add)
-- `/api/tag/fetch/<tag_id>`
-  - `GET`: [Fetch Tag](#fetch-tag)
-- `/api/tag/delete/<tag_id>`
-  - `GET`: [Delete Tag](#delete-1)
+- Receipts
+  - `/api/receipt/`
+    - `GET`: [Fetch Receipts](#fetch-receipts)
+  - `/api/receipt/`
+    - `POST`: [Upload Receipt](#upload-receipt)
+  - `/api/receipt/<id>/`
+    - `GET`: [Fetch Receipt]
+  - `/api/receipt/<id>/image`
+    - `GET`: [View Receipt](#view-receipt)
+  - `/api/receipt/<id>/`
+    - `DELETE`: [Delete Receipt](#delete-receipt)
+- Tags
+  - `/api/tag/`
+    - `GET`: [Fetch Tags](#fetch-tags)
+  - `/api/tag/`
+    - `POST`: [Add Tag](#add-tag)
+  - `/api/tag/<id>`
+    - `GET`: [Fetch Tag](#fetch-tag)
+  - `/api/tag/<id>`
+    - `DELETE`: [Delete Tag](#delete-tag)
 
 ## Responses
 For more information about HTTP Responses 
@@ -64,22 +68,48 @@ These responses indicated an issue on the server side that a client cannot fix t
   - The connected file storage or database is out of space
   - Possible on any `POST` and `PUT` request
 
+### Common JSON Objects
+These JSON structures are sent in multiple places.
+> Note: Any array / list (here and elsewhere) may be empty!
+#### Receipt JSON
+```json5
+{
+    "id": <id>,  // Integer
+    "name": <name>,  // String
+    "upload_dt": <upload_dt>,  // UTC, "%Y-%m-%d %H:%M:%S"
+    "tags": [<tag_id>, ...],  // List of Integer
+}
+```
+#### Tag JSON
+```json5
+{
+    "id": <id>,  // Integer
+    "name": <name>,  // String
+}
+```
+
 # Receipts
-## Upload
+## Upload Receipt
 Uploads a file to the system. 
 
-- Endpoint: **`/api/receipt/upload`**
+- Endpoint: **`/api/receipt/`**
 - Method: `POST`
 - `POST` Data:
   - `file`
     - The file to be uploaded.
     - Filename will be used as key to fetch later.
       - Must be a valid filename for the file store being used.
+  - `name`
+    - A user-friendly name for the receipt.
+    - May be non-unique
+  - `tag`
+    - The id for a tag to apply to the receipt
+    - Can be repeated for any number of (existing) tags
 
 ### Responses
 - **`200` - OK**
-- ~~**`201` - Created**~~
-  - Unclear when to use `200` vs `201`
+  - Content-Type: `text/json`
+  - Body: `<Receipt JSON>`
 - **`400` - Missing Key**
   - When an upload request does not specify a "file" key where the file is stored
 - **`400` - Missing Filename**
@@ -89,8 +119,8 @@ Uploads a file to the system.
 
 ## View Receipt
 Fetch a receipt's image.
-- Endpoint: `/api/receipt/view/<file_key>`
-  - `file_key`: The name of the key you wish to view
+- Endpoint: `/api/receipt/<id>/image/`
+  - `id`: The id of the receipt you wish to view the image of
 - Method `GET`
 
 ### Responses
@@ -100,25 +130,34 @@ Fetch a receipt's image.
 - **`404` - No Such Key**
   - If the requested key is not found in the database
 
-## Fetch Many Keys
-Fetch all know receipt keys
-- Endpoint: `/api/receipt/fetch_many_keys`
+## Fetch Receipt
+Fetch data of one receipt 
+- Endpoint: `/api/receipt/<id>/`
+  - `id`: The id of the receipt you wish to fetch
 - Method: `GET`
 
 ### Responses
 - **`200` - OK**
-  - Content-Type: `text/html`
-  - `Body`: `{"results":[<tag_id_1>, <tag_id_2>, ...]`
-    - Array may be empty
+  - Content-Type: `text/json`
+  - Body: `<Receipt JSON>`
 
-## Delete
-- Endpoint: `/api/receipt/delete/<file_key>`
-  - `file_key`: The name of the key you wish to delete
+## Fetch Receipts
+Fetch all know receipt keys
+- Endpoint: `/api/receipt/`
 - Method: `GET`
-  - **Absolutely _should NOT_ be `GET`! Change to `DELETE` ASAP!**
 
 ### Responses
-- **`204` - No Content** OR **`200` - OK**
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `[<Receipt JSON>, ...]`
+
+## Delete Receipt
+- Endpoint: `/api/receipt/<id>`
+  - `id`: The id of the receipt you wish to delete
+- Method: `DELETE`
+
+### Responses
+- **`204` - No Content**
   - Receipt existed and has been removed
 - **`404` - Not Found**
   - Receipt does not exist
@@ -128,44 +167,51 @@ Fetch all know receipt keys
 
 
 # Tags
-## Add
-- Endpoint:  `/api/tag/add/<tag_name>`
-  - `tag_name`: The name of the tag you wish to create
+## Add Tag
+- Endpoint:  `/api/tag/`
 - Method: `POST`
 - `POST` Data:
-  - None
+  - `name`
+    - A user-friendly name for the tag
+    - May be non-unique
 
 ### Responses
 - **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Tag JSON>`
 - **`400` - Missing Name**
   - When an upload request does not specify a tag name
 
 ## Fetch Tag
-- Endpoint - `/api/tag/fetch/<int: tag_id>`
+- Endpoint - `/api/tag/<id>`
   - `tag_id`: Int id of the tag you wish to fetch
 - Method: `GET`
 
 ### Responses
-- **`400` - No Such Tag**
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Tag JSON>`
+- **`404` - No Such Tag**
   - If the requested tag id is not found in the database
 
-## Fetch All Tags
+## Fetch Tags
 Fetch all tag ids and names
-- Endpoint: `/api/tag/fetch_all`
+- Endpoint: `/api/tag/`
 - Method: `GET`
 
 ### Responses
 - **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `[<Tag JSON>, ...]`
 
-## Delete
+## Delete Tag
 Delete the specified tag
-- Endpoint - `/api/tag/delete/<int\:tag_id>`
-  - `tag_id`: The int id of the key you wish to delete
-- Method: `GET`
-  - **Absolutely _should NOT_ be `GET`! Change to `DELETE` ASAP!**
+- Endpoint - `/api/tag/<id>`
+  - `id`: The int id of the key you wish to delete
+- Method: `DELETE`
 
 ### Responses
-- **`204` - No Content** OR **`200` - OK**
+- **`204` - No Content**
   - Tag existed and has been removed
 - **`404` - Not Found**
   - Tag does not exist

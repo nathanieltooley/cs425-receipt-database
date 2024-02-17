@@ -90,6 +90,7 @@ def upload_receipt():
     storage_key = file_hook.save(im_bytes, filename)
 
     receipt = Receipt()
+    receipt.name = request.form.get("name", None)
     receipt.storage_key = storage_key
     receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 

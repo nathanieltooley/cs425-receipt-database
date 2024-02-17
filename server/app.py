@@ -3,6 +3,8 @@ import logging
 import botocore.exceptions
 
 from typing import Optional, cast
+
+from sqlalchemy.exc import NoResultFound
 from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
@@ -25,6 +27,7 @@ meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
 
 
 @app.errorhandler(FileNotFoundError)
+@app.errorhandler(NoResultFound)
 def code_404(_e) -> Response:
     return response_code(404)
 

@@ -154,10 +154,7 @@ def fetch_receipt(id: int):
 def fetch_receipt_keys():
     receipts = meta_hook.fetch_receipts()
 
-    response = {"results": []}
-
-    for r in receipts:
-        response["results"].append(r.export())
+    response = [r.export() for r in receipts]
 
     logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
     logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
@@ -209,7 +206,7 @@ def fetch_tag(tag_id: int):
             404, "Tag Not Found", "The provided tag does not exists in the database"
         )
 
-    response = {"result": tag.export()}
+    response = tag.export()
 
     logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
     logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
@@ -221,10 +218,7 @@ def fetch_tag(tag_id: int):
 def fetch_tags():
     tags = meta_hook.fetch_tags()
 
-    response = {"results": []}
-
-    for tag in tags:
-        response["results"].append(tag.export())
+    response = [t.export() for t in tags]
 
     logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
     logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")

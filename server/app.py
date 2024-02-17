@@ -64,12 +64,13 @@ def create_app(file_hook=None, meta_hook=None):
             )
 
         file = request.files["file"]
+        logging.debug(f"Filename: {file.filename}, Stream: {file.stream}")
 
-        if file is None:
+        if file is None or len(file.stream.read()) == 0:
             logging.error("UPLOAD ENDPOINT: API client did not send file")
             return error_response(404, "Missing File", "No file has been sent.")
 
-        if file.filename == "":
+        if file.filename is None or file.filename == "":
             logging.error("UPLOAD ENDPOINT: API client sent file with no filename")
             return error_response(
                 404, "Missing Filename", "The file has been sent but with no filename."

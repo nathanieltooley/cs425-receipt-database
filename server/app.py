@@ -79,16 +79,16 @@ def upload_receipt():
     im_bytes = b"".join(file.stream.readlines())
     file.close()
 
-    r_key = file_hook.save(im_bytes, filename)
+    storage_key = file_hook.save(im_bytes, filename)
 
     receipt = Receipt()
-    receipt.storage_key = r_key
+    receipt.storage_key = storage_key
     receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
-    rid = meta_hook.create_receipt(receipt)
-    logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
+    receipt = meta_hook.create_receipt(receipt)
+    logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
 
-    return {"id": rid}
+    return receipt.export()
 
 
 @app.route("/api/receipt/<int:id>/image")
@@ -134,15 +134,7 @@ def fetch_receipt_keys():
     response = {"results": []}
 
     for r in receipts:
-        response["results"].append(
-            {
-                "id": r.id,
-                "metadata": {
-                    "upload_dt": str(r.upload_dt),
-                    "tags": [t.id for t in r.tags],
-                },
-            }
-        )
+        response["results"].append(r.export())
 
     logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
     logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
@@ -185,7 +177,7 @@ def upload_tag():
         return error_response(400, "Missing Name", "Tag Name not specified")
 
     tag = Tag(name=tag_name)
-    return str(meta_hook.create_tag(tag))
+    return meta_hook.create_tag(tag).export()
 
 
 @app.route("/api/tag/<int:tag_id>")
@@ -197,13 +189,12 @@ def fetch_tag(tag_id: int):
             404, "Tag Not Found", "The provided tag does not exists in the database"
         )
 
-    response = {"result": {"id": tag.id, "name": tag.name}}
+    response = {"result": tag.export()}
 
-    response_j_string = json.dumps(response)
     logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
-    logging.debug(f"FETCH_TAG ENDPOINT: Response: {response_j_string}")
+    logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
 
-    return Response(response_j_string, 200)
+    return response
 
 
 @app.route("/api/tag/")
@@ -213,7 +204,7 @@ def fetch_tags():
     response = {"results": []}
 
     for tag in tags:
-        response["results"].append({"id": tag.id, "name": tag.name})
+        response["results"].append(tag.export())
 
     logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
     logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")

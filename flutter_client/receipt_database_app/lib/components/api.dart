@@ -10,6 +10,7 @@ class Api {
   static Future<void> uploadFile(String filePath) async {
 
     try {
+      // need to change
       Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/upload');
       var request = http.MultipartRequest('POST', uri);
 
@@ -29,8 +30,9 @@ class Api {
         print('Error uploading file: $e');
     }
   }
-
+//
   Future<Uint8List> fetchReceiptData(int fileKey) async {
+    // need to change
     final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view/$fileKey'));
 
     if (response.statusCode == 200) {
@@ -65,6 +67,7 @@ class Api {
 
   Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
     try {
+      // need to change
       final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/fetch_many_keys'));
       if (response.statusCode == 200) {
         final List<dynamic> receiptsJson = json.decode(response.body)['results'];

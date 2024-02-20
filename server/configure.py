@@ -44,10 +44,23 @@ class _FileSystemConfig:
 
 
 @dataclass
+class _AWSS3Config:
+    bucket_name: str
+    # If not provided, boto3 falls back to the environment
+    access_key_id: str | None = None
+    secret_access_key: str | None = None
+
+    @classmethod
+    def default(cls) -> "_AWSS3Config":
+        return _AWSS3Config("cs425-3-test-bucket")
+
+
+@dataclass
 class _Config:
     SQLite3: _SQLite3Config = field(default_factory=_SQLite3Config.default)
     StorageHooks: _StorageHooks = field(default_factory=_StorageHooks.default)
     FileSystem: _FileSystemConfig = field(default_factory=_FileSystemConfig.default)
+    AWSS3: _AWSS3Config = field(default_factory=_AWSS3Config.default)
 
     DEFAULT_FILE_PATH = os.path.normpath(DIRS.user_config_dir + "/config.json")
 

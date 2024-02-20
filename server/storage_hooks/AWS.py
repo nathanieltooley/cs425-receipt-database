@@ -1,11 +1,8 @@
-import datetime as dt
-import warnings
-
 import boto3
 import botocore.exceptions
 
-from receipt import Receipt
-from storage_hooks.storage_hooks import StorageHook, ReceiptSort, FileHook
+from configure import CONFIG
+from storage_hooks.storage_hooks import FileHook
 
 
 def init_script():
@@ -24,13 +21,14 @@ class AWSS3Hook(FileHook):
 
     def __init__(self):
         super().__init__()
+        self.config = CONFIG.AWSS3
+
         self.client = boto3.client(
             "s3",
-            aws_access_key_id=None,  # Key as str or None (not empty str)
-            aws_secret_access_key=None,  # Ditto
+            aws_access_key_id=self.config.access_key_id,  # Key as str or None
+            aws_secret_access_key=self.config.secret_access_key,  # Ditto
         )
-        # ToDo: Configurable Bucket Name
-        self.bucket_name = "cs425-3-test-bucket"
+        self.bucket_name = self.config.bucket_name
 
     def save(self, image: bytes, original_name: str) -> str:
         key = self._make_key(original_name)

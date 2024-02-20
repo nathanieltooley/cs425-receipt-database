@@ -3,6 +3,8 @@ import logging
 import botocore.exceptions
 
 from typing import Optional, cast
+
+from sqlalchemy.exc import NoResultFound
 from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
@@ -15,6 +17,12 @@ from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
 from app_logging import init_logging
 
 init_logging(logging.DEBUG)
+
+
+@app.errorhandler(FileNotFoundError)
+@app.errorhandler(NoResultFound)
+def code_404(_e) -> Response:
+    return response_code(404)
 
 
 def error_response(status: int, error_name: str, error_message: str) -> Response:
@@ -47,6 +55,11 @@ def response_code(status: int) -> Response:
 def create_app(file_hook=None, meta_hook=None):
     if file_hook is None:
         file_hook = get_file_hook(CONFIG.StorageHooks.file_hook)
+@app.route("/api/receipt/", methods=["POST"])
+def upload_receipt():
+    """API Endpoint for uploading a receipt image"""
+    if "file" not in request.files:
+        return error_response(400, "Missing Key", "The file has not been specified.")
 
     if meta_hook is None:
         meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
@@ -166,10 +179,24 @@ def create_app(file_hook=None, meta_hook=None):
             file_hook.delete(storage_key)
         except FileNotFoundError:
             pass
+    storage_key = file_hook.save(im_bytes, filename)
+
+    receipt = Receipt()
+    receipt.name = request.form.get("name", None)
+    receipt.storage_key = storage_key
+    receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
+
+    receipt = meta_hook.create_receipt(receipt)
+    logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
+
+    return receipt.export()
 
         logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
         return response_code(200)
+@app.route("/api/receipt/<int:id>/image")
+def view_receipt(id: int):
+    """API Endpoint for viewing a receipt
 
     @app.route("/api/tag/", methods=["POST"])
     def upload_tag():
@@ -186,6 +213,12 @@ def create_app(file_hook=None, meta_hook=None):
         if tag_name == "":
             logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
             return error_response(400, "Missing Name", "Tag Name not specified")
+    if receipt is None:
+        return error_response(
+            404,
+            "No such key",
+            f"The key, {id}, was not found in the database",
+        )
 
         tag = Tag(name=tag_name)
         return str(meta_hook.create_tag(tag))
@@ -193,6 +226,11 @@ def create_app(file_hook=None, meta_hook=None):
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):
         tag = meta_hook.fetch_tag(tag_id)
+    # FileNotFoundError will be converted to 404 by flask
+    raw_bytes = file_hook.fetch(receipt.storage_key)
+
+    # Convert receipt image into BytesIO object
+    receipt_bytes = BytesIO(raw_bytes)
 
         if tag is None:
             return error_response(
@@ -210,6 +248,27 @@ def create_app(file_hook=None, meta_hook=None):
     @app.route("/api/tag/")
     def fetch_tags():
         tags = meta_hook.fetch_tags()
+@app.route("/api/receipt/<int:id>/")
+def fetch_receipt(id: int):
+    """API Endpoint for viewing receipt metadata
+
+    Args:
+        id: The id of the receipt to fetch
+    """
+    if (receipt := meta_hook.fetch_receipt(id)) is None:
+        return error_response(
+            404,
+            "No image found",
+            f"The key, {id}, was not found in the database",
+        )
+    return receipt.export()
+
+
+@app.route("/api/receipt/")
+def fetch_receipt_keys():
+    receipts = meta_hook.fetch_receipts()
+
+    response = [r.export() for r in receipts]
 
         response = {"results": []}
 
@@ -224,6 +283,15 @@ def create_app(file_hook=None, meta_hook=None):
     @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
     def delete_tag(tag_id: int):
         """Deletes a Tag
+@app.route("/api/receipt/<int:id>", methods=["DELETE"])
+def delete_receipt(id: int):
+    """Deletes a receipt in the AWS bucket
+
+    Args:
+        id: The id of the receipt to delete
+    """
+    storage_key = meta_hook.delete_receipt(id)
+    file_hook.delete(storage_key)
 
         Args:
             tag_id: The  name to delete
@@ -231,7 +299,69 @@ def create_app(file_hook=None, meta_hook=None):
         meta_hook.delete_tag(tag_id)
 
         logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
+    return response_code(204)
 
         return response_code(200)
 
     return app
+@app.route("/api/tag/", methods=["POST"])
+def upload_tag():
+    """API Endpoint for uploading a receipt image.
+
+    Returns:
+        The id for the newly created tag
+    Raises:
+        400 if tag_name is empty
+    """
+
+    tag_name = request.form.get("name", "")
+
+    if tag_name == "":
+        logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
+        return error_response(400, "Missing Name", "Tag Name not specified")
+
+    tag = Tag(name=tag_name)
+    return meta_hook.create_tag(tag).export()
+
+
+@app.route("/api/tag/<int:tag_id>")
+def fetch_tag(tag_id: int):
+    tag = meta_hook.fetch_tag(tag_id)
+
+    if tag is None:
+        return error_response(
+            404, "Tag Not Found", "The provided tag does not exists in the database"
+        )
+
+    response = tag.export()
+
+    logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
+    logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
+
+    return response
+
+
+@app.route("/api/tag/")
+def fetch_tags():
+    tags = meta_hook.fetch_tags()
+
+    response = [t.export() for t in tags]
+
+    logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
+    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
+
+    return response
+
+
+@app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
+def delete_tag(tag_id: int):
+    """Deletes a Tag
+
+    Args:
+        tag_id: The  name to delete
+    """
+    meta_hook.delete_tag(tag_id)
+
+    logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
+
+    return response_code(204)

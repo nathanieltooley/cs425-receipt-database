@@ -8,23 +8,25 @@ from storage_hooks.file_system import FileSystemHook
 from storage_hooks.AWS import AWSS3Hook
 from storage_hooks.SQLite3 import SQLite3
 
+from temp_hooks import sqlite3, file_system, aws_s3
+
 
 class TestDatabaseHook:
     @pytest.fixture()
     def sqlite3_hook(self) -> SQLite3:
         return SQLite3()
 
-    @pytest.fixture(params=[SQLite3])
+    @pytest.fixture(params=[sqlite3])
     def hook(self, request) -> DatabaseHook:
         hook: DatabaseHook = request.param()
         hook.initialize_storage()
         return hook
 
     @pytest.fixture
-    def tag(self, hook) -> tuple[int, Tag]:
+    def tag(self, hook) -> Tag:
         tag = Tag(name="test_tag")
         hook.create_tag(tag)
-        yield tag.id, tag
+        yield tag
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             hook.delete_objects(tag)
@@ -43,18 +45,18 @@ class TestDatabaseHook:
         return [t.id for t in tags]
 
     @pytest.fixture
-    def receipt(self, hook, tags) -> tuple[int, Receipt]:
+    def receipt(self, hook, tags) -> Receipt:
         receipt = Receipt(storage_key="where?", tags=tags)
-        yield hook.create_receipt(receipt), receipt
+        receipt = hook.create_receipt(receipt)
+        yield receipt
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             hook.delete_objects(receipt)
 
     def test_fetch_receipt(self, hook, receipt):
-        r_id, receipt = receipt
-        fetched = hook.fetch_receipt(r_id)
+        fetched = hook.fetch_receipt(receipt.id)
         assert fetched is not receipt
-        assert fetched.id == r_id
+        assert fetched.id == receipt.id
         assert fetched.storage_key == receipt.storage_key
         assert fetched.upload_dt == receipt.upload_dt
 
@@ -69,13 +71,11 @@ class TestDatabaseHook:
     #     return NotImplemented
 
     def test_delete_receipt(self, hook, receipt):
-        r_id, receipt = receipt
-        assert hook.delete_receipt(r_id) == receipt.storage_key
-        assert hook.fetch_receipt(r_id) is None
+        assert hook.delete_receipt(receipt.id) == receipt.storage_key
+        assert hook.fetch_receipt(receipt.id) is None
 
     def test_fetch_tag(self, hook, tag):
-        t_id, tag = tag
-        assert hook.fetch_tag(t_id) == tag
+        assert hook.fetch_tag(tag.id) == tag
 
     def test_fetch_tags(self, hook, tags):
         fetched = hook.fetch_tags([t.id for t in tags])
@@ -86,9 +86,8 @@ class TestDatabaseHook:
     # def test_update_tag(self, hook, tags):
 
     def test_delete_tag(self, hook, tag):
-        t_id, tag = tag
-        hook.delete_tag(t_id)
-        assert hook.fetch_tag(t_id) is None
+        hook.delete_tag(tag.id)
+        assert hook.fetch_tag(tag.id) is None
 
 
 class TestFileHook:
@@ -102,7 +101,7 @@ class TestFileHook:
     def file_system_hook(self) -> FileSystemHook:
         return FileSystemHook()
 
-    @pytest.fixture(params=[FileSystemHook, AWSS3Hook])
+    @pytest.fixture(params=[file_system, aws_s3])
     def hook(self, request) -> FileHook:
         return request.param()
 

@@ -1,22 +1,9 @@
-import datetime as dt
 import warnings
 
 import boto3
 import botocore.exceptions
 
-from receipt import Receipt
-from storage_hooks.storage_hooks import StorageHook, ReceiptSort, FileHook
-
-
-def init_script():
-    """Script to initialize AWSHook."""
-    # ToDo: Configure AWS Hook locally. I.e. use a `botocore.config.Config`
-    # another option would to be internally set the environment variables boto3 uses
-    import subprocess
-
-    subprocess.run(["aws", "configure"])
-    hook = AWSS3Hook()
-    hook.initialize_storage()
+from storage_hooks.storage_hooks import FileHook
 
 
 class AWSS3Hook(FileHook):
@@ -35,63 +22,104 @@ class AWSS3Hook(FileHook):
             Key=key,
             Body=image,
         )
-        if not r == 200:
-            raise RuntimeError(f"S3 return code {r} != 200")
+        if r["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            raise RuntimeError(
+                f"S3 return code {r['ResponseMetadata']['HTTPStatusCode']} != 200"
+            )
         return key
 
     def fetch(self, location: str) -> bytes:
+        print(location)
         try:
             obj = self.client.get_object(Bucket=self.bucket_name, Key=location)
             # data['ResponseMetadata']['HTTPStatusCode'] should equal 200
             return obj.get("Body").read()
         except AttributeError:
             raise ValueError
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError
+            raise
 
     def replace(self, location: str, image: bytes):
-        # ToDo: Check location exists
+        try:
+            self.client.head_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                raise FileNotFoundError
+            raise
+
         r = self.client.put_object(
             Bucket=self.bucket_name,
             Key=location,
             Body=image,
         )
-        if not r == 200:
+        if r["ResponseMetadata"]["HTTPStatusCode"] != 200:
             raise RuntimeError(f"S3 return code {r} != 200")
 
     def delete(self, location: str):
-        r = self.client.delete_object(Bucket=self.bucket_name, Key=location)
+        try:
+            self.client.head_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                raise FileNotFoundError
+            raise
+
+        try:
+            r = self.client.delete_object(Bucket=self.bucket_name, Key=location)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError
+            else:
+                raise RuntimeError
         if (r_code := r["ResponseMetadata"]["HTTPStatusCode"]) != 204:
             raise RuntimeError(f"S3 return code {r_code} != 204")
 
-    def initialize_storage(self):
+    def _delete_all(self):
+        """Deletes all objects from the bucket"""
+        objects = self.client.list_objects_v2(Bucket=self.bucket_name)
+        formatted = [{"Key": obj["Key"]} for obj in objects["Contents"]]
+        self.client.delete_objects(
+            Bucket=self.bucket_name, Delete={"Objects": formatted}
+        )
+
+    def initialize_storage(self, clean: bool = False):
         """Initialize storage / database with current scheme."""
-
-        # try:
-        _r = self.client.create_bucket(Bucket=self.bucket_name)
-        # except botocore.exceptions.ClientError as e:
-        #     match e.response["Error"]["Code"]:
-        #         case "BucketAlreadyExists":
-        #             raise ValueError(f"Bucket {self.bucket_name} Already Exists")
-        #         case "BucketAlreadyOwnedByYou":
-        #             warnings.warn(f"You already own Bucket {self.bucket_name}")
-        #         case e_ec if e_ec in [
-        #             "IllegalLocationConstraintException",
-        #             "InvalidLocationConstraint",
-        #         ]:
-        #             # This case seems undocumented
-        #             # When client on us-east-1 and bucket.name = "cs425-3-test-bucket",
-        #             # it raises IllegalLocationConstraintException, even if given a
-        #             # CreateBucketConfiguration={"LocationConstraint": <region>}.
-        #             # When client on us-east-1 and bucket.name = "cs425-3-test-bucket2",
-        #             # it raises InvalidLocationConstraint when only when given a
-        #             # CreateBucketConfiguration={"LocationConstraint": <region>}.
-        #             raise
-        #         case _:
-        #             raise
-
-    def update_storage(self) -> bool:
-        """Migrates a copy of the database to the current scheme version.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        return True
+        try:
+            _r = self.client.head_bucket(Bucket=self.bucket_name)
+        except botocore.exceptions.ClientError as e:
+            match e.response["Error"]["Code"]:
+                case 403:
+                    raise ValueError(f"Bucket {self.bucket_name} Already Exists")
+                case 404:
+                    pass
+                case _:
+                    raise
+        else:
+            if clean:
+                self._delete_all()
+            return
+        try:
+            _r = self.client.create_bucket(Bucket=self.bucket_name)
+        except botocore.exceptions.ClientError as e:
+            match e.response["Error"]["Code"]:
+                case "BucketAlreadyExists":
+                    raise ValueError(f"Bucket {self.bucket_name} Already Exists")
+                case "BucketAlreadyOwnedByYou":
+                    warnings.warn(
+                        f"Bucket {self.bucket_name} already exists and is owned by you"
+                    )
+                case e_ec if e_ec in [
+                    "IllegalLocationConstraintException",
+                    "InvalidLocationConstraint",
+                ]:
+                    # This case seems undocumented
+                    # When client on us-east-1 and bucket.name = "cs425-3-test-bucket",
+                    # it raises IllegalLocationConstraintException, even if given a
+                    # CreateBucketConfiguration={"LocationConstraint": <region>}.
+                    # When client on us-east-1 and bucket.name = "cs425-3-test-bucket2",
+                    # it raises InvalidLocationConstraint when only when given a
+                    # CreateBucketConfiguration={"LocationConstraint": <region>}.
+                    raise
+                case _:
+                    raise

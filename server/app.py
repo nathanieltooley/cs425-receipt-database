@@ -85,9 +85,10 @@ def upload_receipt():
     receipt.storage_key = r_key
     receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
-    meta_hook.save_objects(receipt)
+    rid = meta_hook.create_receipt(receipt)
     logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
-    return response_code(200)
+
+    return {"id": rid}
 
 
 @app.route("/api/receipt/view/<int:id>")
@@ -157,7 +158,10 @@ def delete_receipt(id: int):
         id: The id of the receipt to delete
     """
     storage_key = meta_hook.delete_receipt(id)
-    file_hook.delete(storage_key)
+    try:
+        file_hook.delete(storage_key)
+    except FileNotFoundError:
+        pass
 
     logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
@@ -187,6 +191,11 @@ def upload_tag():
 @app.route("/api/tag/<int:tag_id>")
 def fetch_tag(tag_id: int):
     tag = meta_hook.fetch_tag(tag_id)
+
+    if tag is None:
+        return error_response(
+            404, "Tag Not Found", "The provided tag does not exists in the database"
+        )
 
     response = {"result": {"id": tag.id, "name": tag.name}}
 

@@ -10,7 +10,7 @@ class Api {
   static Future<void> uploadFile(String filePath) async {
 
     try {
-      Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/upload');
+      Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/');
       var request = http.MultipartRequest('POST', uri);
 
       // Attach the file
@@ -31,7 +31,7 @@ class Api {
   }
 
   Future<Uint8List> fetchReceiptData(int fileKey) async {
-    final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view/$fileKey'));
+    final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/$fileKey/image'));
 
     if (response.statusCode == 200) {
       return response.bodyBytes;
@@ -45,7 +45,7 @@ class Api {
       final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/tag/'));
 
       if (response.statusCode == 200) {
-        final List<dynamic> tagsJson = json.decode(response.body)['results'];
+        final List<dynamic> tagsJson = json.decode(response.body);
         final List<String> tags = [];
 
         for (final tag in tagsJson) {
@@ -65,16 +65,16 @@ class Api {
 
   Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/fetch_many_keys'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/'));
       if (response.statusCode == 200) {
-        final List<dynamic> receiptsJson = json.decode(response.body)['results'];
+        final List<dynamic> receiptsJson = json.decode(response.body);
         
         // Fetch details for each receipt and create a map
         final List<Map<String, dynamic>> receiptDataList = [];
         for (final receiptJson in receiptsJson) {
           int tempReceiptId = receiptJson['id'];
           final String receiptId = tempReceiptId.toString();
-          final List<dynamic> tagsJson = receiptJson['metadata']['tags'];
+          final List<dynamic> tagsJson = receiptJson['tags'];
 
           // Convert tag IDs to strings
           final List<String> tags = tagsJson.map((tag) => tag.toString()).toList();

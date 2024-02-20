@@ -77,21 +77,11 @@ def test_upload_receipt_missing_file_data(test_client: FlaskClient):
 
 
 def test_upload_receipt_missing_filename(test_client: FlaskClient):
-    none_data = {"file": (io.BytesIO(b"test"), None)}
+    data = {"file": (io.BytesIO(b"test"), "")}
 
-    none_response = test_client.post("/api/receipt/upload", data=none_data)
+    response = test_client.post(
+        "/api/receipt/upload", data=data, content_type="multipart/form-data"
+    )
 
-    assert none_response.status_code == 404
-    assert cast(Any, none_response.json)["error_name"] == "Missing Filename"
-
-
-# I wanted to do this in the previous test
-# however, there seems to be some sort of state or side effect that causes
-# the wrong error to be triggered in a second post request
-def test_upload_receipt_missing_filename_empty(test_client: FlaskClient):
-    empty_data = {"file": (io.BytesIO(b"test"), "")}
-
-    empty_response = test_client.post("/api/receipt/upload", data=empty_data)
-
-    assert empty_response.status_code == 404
-    assert cast(Any, empty_response.json)["error_name"] == "Missing Filename"
+    assert response.status_code == 404
+    assert cast(Any, response.json)["error_name"] == "Missing Filename"

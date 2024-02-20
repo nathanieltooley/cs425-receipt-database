@@ -19,12 +19,6 @@ from app_logging import init_logging
 init_logging(logging.DEBUG)
 
 
-@app.errorhandler(FileNotFoundError)
-@app.errorhandler(NoResultFound)
-def code_404(_e) -> Response:
-    return response_code(404)
-
-
 def error_response(status: int, error_name: str, error_message: str) -> Response:
     """Create and return a Flask Response object that contains error information
 
@@ -55,11 +49,6 @@ def response_code(status: int) -> Response:
 def create_app(file_hook=None, meta_hook=None):
     if file_hook is None:
         file_hook = get_file_hook(CONFIG.StorageHooks.file_hook)
-@app.route("/api/receipt/", methods=["POST"])
-def upload_receipt():
-    """API Endpoint for uploading a receipt image"""
-    if "file" not in request.files:
-        return error_response(400, "Missing Key", "The file has not been specified.")
 
     if meta_hook is None:
         meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
@@ -68,7 +57,12 @@ def upload_receipt():
     app = Flask(__name__)
     CORS(app)
 
-    @app.route("/api/receipt/upload", methods=["POST"])
+    @app.errorhandler(FileNotFoundError)
+    @app.errorhandler(NoResultFound)
+    def code_404(_e) -> Response:
+        return response_code(404)
+
+    @app.route("/api/receipt/", methods=["POST"])
     def upload_receipt():
         """API Endpoint for uploading a receipt image"""
         if "file" not in request.files:
@@ -99,18 +93,19 @@ def upload_receipt():
         im_bytes = b"".join(file.stream.readlines())
         file.close()
 
-        r_key = file_hook.save(im_bytes, filename)
+        storage_key = file_hook.save(im_bytes, filename)
 
         receipt = Receipt()
-        receipt.storage_key = r_key
+        receipt.name = request.form.get("name", None)
+        receipt.storage_key = storage_key
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
-        rid = meta_hook.create_receipt(receipt)
-        logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {r_key}")
+        receipt = meta_hook.create_receipt(receipt)
+        logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
 
-        return {"id": rid}
+        return receipt.export()
 
-    @app.route("/api/receipt/view/<int:id>")
+    @app.route("/api/receipt/<int:id>/image")
     def view_receipt(id: int):
         """API Endpoint for viewing a receipt
 
@@ -125,7 +120,7 @@ def upload_receipt():
 
         if receipt is None:
             return error_response(
-                400,
+                404,
                 "No such key",
                 f"The key, {id}, was not found in the database",
             )
@@ -133,7 +128,9 @@ def upload_receipt():
         # If we made it this far, receipt can not be None so we should be able to safely type cast
         receipt = cast(Receipt, receipt)
 
+        # FileNotFoundError will be converted to 404 by flask
         raw_bytes = file_hook.fetch(receipt.storage_key)
+
         # Convert receipt image into BytesIO object
         receipt_bytes = BytesIO(raw_bytes)
 
@@ -145,29 +142,33 @@ def upload_receipt():
         logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
         return file
 
-    @app.route("/api/receipt/fetch_many_keys")
+    @app.route("/api/receipt/<int:id>/")
+    def fetch_receipt(id: int):
+        """API Endpoint for viewing receipt metadata
+
+        Args:
+            id: The id of the receipt to fetch
+        """
+        if (receipt := meta_hook.fetch_receipt(id)) is None:
+            return error_response(
+                404,
+                "No image found",
+                f"The key, {id}, was not found in the database",
+            )
+        return receipt.export()
+
+    @app.route("/api/receipt/")
     def fetch_receipt_keys():
         receipts = meta_hook.fetch_receipts()
 
-        response = {"results": []}
-
-        for r in receipts:
-            response["results"].append(
-                {
-                    "id": r.id,
-                    "metadata": {
-                        "upload_dt": str(r.upload_dt),
-                        "tags": [t.id for t in r.tags],
-                    },
-                }
-            )
+        response = [r.export() for r in receipts]
 
         logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
         return response
 
-    @app.route("/api/receipt/delete/<int:id>")
+    @app.route("/api/receipt/<int:id>", methods=["DELETE"])
     def delete_receipt(id: int):
         """Deletes a receipt in the AWS bucket
 
@@ -175,28 +176,11 @@ def upload_receipt():
             id: The id of the receipt to delete
         """
         storage_key = meta_hook.delete_receipt(id)
-        try:
-            file_hook.delete(storage_key)
-        except FileNotFoundError:
-            pass
-    storage_key = file_hook.save(im_bytes, filename)
-
-    receipt = Receipt()
-    receipt.name = request.form.get("name", None)
-    receipt.storage_key = storage_key
-    receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
-
-    receipt = meta_hook.create_receipt(receipt)
-    logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
-
-    return receipt.export()
+        file_hook.delete(storage_key)
 
         logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
 
-        return response_code(200)
-@app.route("/api/receipt/<int:id>/image")
-def view_receipt(id: int):
-    """API Endpoint for viewing a receipt
+        return response_code(204)
 
     @app.route("/api/tag/", methods=["POST"])
     def upload_tag():
@@ -212,13 +196,7 @@ def view_receipt(id: int):
 
         if tag_name == "":
             logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
-            return error_response(400, "Missing Name", "Tag Name not specified")
-    if receipt is None:
-        return error_response(
-            404,
-            "No such key",
-            f"The key, {id}, was not found in the database",
-        )
+            return error_response(404, "Missing Name", "Tag Name not specified")
 
         tag = Tag(name=tag_name)
         return str(meta_hook.create_tag(tag))
@@ -226,54 +204,24 @@ def view_receipt(id: int):
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):
         tag = meta_hook.fetch_tag(tag_id)
-    # FileNotFoundError will be converted to 404 by flask
-    raw_bytes = file_hook.fetch(receipt.storage_key)
-
-    # Convert receipt image into BytesIO object
-    receipt_bytes = BytesIO(raw_bytes)
 
         if tag is None:
             return error_response(
                 404, "Tag Not Found", "The provided tag does not exists in the database"
             )
 
-        response = {"result": {"id": tag.id, "name": tag.name}}
+        response = tag.export()
 
-        response_j_string = json.dumps(response)
         logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
-        logging.debug(f"FETCH_TAG ENDPOINT: Response: {response_j_string}")
+        logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
 
-        return Response(response_j_string, 200)
+        return response
 
     @app.route("/api/tag/")
     def fetch_tags():
         tags = meta_hook.fetch_tags()
-@app.route("/api/receipt/<int:id>/")
-def fetch_receipt(id: int):
-    """API Endpoint for viewing receipt metadata
 
-    Args:
-        id: The id of the receipt to fetch
-    """
-    if (receipt := meta_hook.fetch_receipt(id)) is None:
-        return error_response(
-            404,
-            "No image found",
-            f"The key, {id}, was not found in the database",
-        )
-    return receipt.export()
-
-
-@app.route("/api/receipt/")
-def fetch_receipt_keys():
-    receipts = meta_hook.fetch_receipts()
-
-    response = [r.export() for r in receipts]
-
-        response = {"results": []}
-
-        for tag in tags:
-            response["results"].append({"id": tag.id, "name": tag.name})
+        response = [t.export() for t in tags]
 
         logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
         logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
@@ -283,15 +231,6 @@ def fetch_receipt_keys():
     @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
     def delete_tag(tag_id: int):
         """Deletes a Tag
-@app.route("/api/receipt/<int:id>", methods=["DELETE"])
-def delete_receipt(id: int):
-    """Deletes a receipt in the AWS bucket
-
-    Args:
-        id: The id of the receipt to delete
-    """
-    storage_key = meta_hook.delete_receipt(id)
-    file_hook.delete(storage_key)
 
         Args:
             tag_id: The  name to delete
@@ -299,69 +238,7 @@ def delete_receipt(id: int):
         meta_hook.delete_tag(tag_id)
 
         logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
-    return response_code(204)
 
-        return response_code(200)
+        return response_code(204)
 
     return app
-@app.route("/api/tag/", methods=["POST"])
-def upload_tag():
-    """API Endpoint for uploading a receipt image.
-
-    Returns:
-        The id for the newly created tag
-    Raises:
-        400 if tag_name is empty
-    """
-
-    tag_name = request.form.get("name", "")
-
-    if tag_name == "":
-        logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
-        return error_response(400, "Missing Name", "Tag Name not specified")
-
-    tag = Tag(name=tag_name)
-    return meta_hook.create_tag(tag).export()
-
-
-@app.route("/api/tag/<int:tag_id>")
-def fetch_tag(tag_id: int):
-    tag = meta_hook.fetch_tag(tag_id)
-
-    if tag is None:
-        return error_response(
-            404, "Tag Not Found", "The provided tag does not exists in the database"
-        )
-
-    response = tag.export()
-
-    logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
-    logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
-
-    return response
-
-
-@app.route("/api/tag/")
-def fetch_tags():
-    tags = meta_hook.fetch_tags()
-
-    response = [t.export() for t in tags]
-
-    logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
-    logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
-
-    return response
-
-
-@app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
-def delete_tag(tag_id: int):
-    """Deletes a Tag
-
-    Args:
-        tag_id: The  name to delete
-    """
-    meta_hook.delete_tag(tag_id)
-
-    logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
-
-    return response_code(204)

@@ -8,13 +8,15 @@ from storage_hooks.file_system import FileSystemHook
 from storage_hooks.AWS import AWSS3Hook
 from storage_hooks.SQLite3 import SQLite3
 
+from temp_hooks import sqlite3, file_system, aws_s3
+
 
 class TestDatabaseHook:
     @pytest.fixture()
     def sqlite3_hook(self) -> SQLite3:
         return SQLite3()
 
-    @pytest.fixture(params=[SQLite3])
+    @pytest.fixture(params=[sqlite3])
     def hook(self, request) -> DatabaseHook:
         hook: DatabaseHook = request.param()
         hook.initialize_storage()
@@ -102,7 +104,7 @@ class TestFileHook:
     def file_system_hook(self) -> FileSystemHook:
         return FileSystemHook()
 
-    @pytest.fixture(params=[FileSystemHook, AWSS3Hook])
+    @pytest.fixture(params=[file_system, aws_s3])
     def hook(self, request) -> FileHook:
         return request.param()
 

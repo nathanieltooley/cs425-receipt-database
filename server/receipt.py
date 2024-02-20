@@ -50,10 +50,17 @@ class Tag(Base):
             return NotImplemented
         return self.id == other.id and self.name == other.name
 
+    def export(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
+
 
 class Receipt(Base):
     __tablename__ = "receipt"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(default="Unnamed")
     storage_key: Mapped[str]
     upload_dt: Mapped[datetime] = mapped_column(
         type_=TZDateTime, server_default=func.now()
@@ -66,3 +73,11 @@ class Receipt(Base):
         if not isinstance(other, Receipt):
             return NotImplemented
         return self.id == other.id and self.storage_key == other.storage_key
+
+    def export(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "upload_dt": str(self.upload_dt),
+            "tags": [t.id for t in self.tags],
+        }

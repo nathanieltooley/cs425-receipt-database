@@ -1,0 +1,16 @@
+services:
+  receipt-database:
+    build: .  # Tells compose to build ./Dockerfile
+    ports:
+      # [LocalIP:]LocalPort:ContainerPort
+      # Map localhost:8000 on local machine to port 8000 of the container
+      # Remove 127.0.0.1 to allow sources from other IPs to access
+      - 127.0.0.1:8000:8000  # 127.0.0.1 == localhost
+    volumes:
+      # VolumeName:ContainerLocation
+      # Make /var/lib/receipt-database persistent
+      - receipt-database:/var/lib/receipt-database
+
+volumes:
+  # Volumes have to be declared.
+  receipt-database:

@@ -159,7 +159,7 @@ def update_receipt(id_: int):
     if "name" in request.form:
         receipt.name = request.form.get("name")
 
-    receipt = meta_hook.create_receipt(receipt)
+    receipt = meta_hook.update_receipt(receipt)
 
     return receipt.export()
 
@@ -269,7 +269,7 @@ def update_tag(tag_id: int):
     if "name" in request.form:
         tag.name = request.form.get("name")
 
-    return meta_hook.create_tag(tag)
+    return meta_hook.update_tag(tag).export()
 
 
 @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])

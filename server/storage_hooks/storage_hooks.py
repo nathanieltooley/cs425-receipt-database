@@ -77,8 +77,8 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
 
-    def update_receipt(self, diff: dict) -> Receipt:
-        raise NotImplementedError
+    def update_receipt(self, updated_receipt: Receipt) -> Receipt:
+        return self.create_receipt(updated_receipt)
 
     def delete_receipt(self, id_: int) -> str:
         with Session(self.engine) as session:
@@ -110,8 +110,8 @@ class DatabaseHook(abc.ABC):
                 stmt = stmt.filter(Tag.id.in_(tag_ids))
             return session.scalars(stmt).all()
 
-    def update_tag(self, diff: dict) -> Tag:
-        raise NotImplementedError
+    def update_tag(self, updated_tag: Tag) -> Tag:
+        return self.create_tag(updated_tag)
 
     def delete_tag(self, tag_id: int) -> None:
         with Session(self.engine) as session:

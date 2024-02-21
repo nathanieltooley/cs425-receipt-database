@@ -138,6 +138,32 @@ def view_receipt(id: int):
     return file
 
 
+@app.route("/api/receipt/<int:id_>", methods=["PUT"])
+def update_receipt(id_: int):
+    """API Endpoint for updating a receipt"""
+    receipt = meta_hook.fetch_receipt(id_)
+    if receipt is None:
+        return response_code(404)
+
+    if (file := request.files.get("file", None)) is not None:
+        im_bytes = b"".join(file.stream.readlines())
+        file.close()
+        file_hook.replace(receipt.storage_key, im_bytes)
+
+    logging.debug(f"UPDATE ENDPOINT: {request.form}")
+    receipt.tags = request.form.getlist("tag", type=int)
+    receipt.tags += request.form.getlist("add tag", type=int)
+    for tag in request.form.getlist("remove tag", type=int):
+        receipt.tags.remove(tag)
+
+    if "name" in request.form:
+        receipt.name = request.form.get("name")
+
+    receipt = meta_hook.create_receipt(receipt)
+
+    return receipt.export()
+
+
 @app.route("/api/receipt/<int:id>/")
 def fetch_receipt(id: int):
     """API Endpoint for viewing receipt metadata

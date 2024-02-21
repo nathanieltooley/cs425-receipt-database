@@ -256,6 +256,22 @@ def fetch_tags():
     return response
 
 
+@app.route("/api/tag/<int:tag_id>/", methods=["PUT"])
+def update_tag(tag_id: int):
+    """Updates a tag
+
+    Args:
+        tag_id: The id of the tag to update
+    """
+    if (tag := meta_hook.fetch_tag(tag_id)) is None:
+        return response_code(404)
+
+    if "name" in request.form:
+        tag.name = request.form.get("name")
+
+    return meta_hook.create_tag(tag)
+
+
 @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
 def delete_tag(tag_id: int):
     """Deletes a Tag

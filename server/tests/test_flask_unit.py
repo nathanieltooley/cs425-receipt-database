@@ -7,6 +7,7 @@ import pytest
 import modulefinder
 import sys
 import pathlib
+from receipt import Receipt, Tag
 
 file_path = pathlib.Path(__file__).absolute()
 sys.path.append(str(file_path.parent.parent))
@@ -43,16 +44,27 @@ def test_upload_receipt(test_client: FlaskClient, mocker):
     data = {}
     data["file"] = (io.BytesIO(b"Test"), "test.jpg")
 
+    test_receipt = Receipt()
+    test_receipt.id = 1
+    test_receipt.name = "Test"
+
+    tags = [Tag(id=1, name="Test Tag")]
+    test_receipt.tags = tags
+
     fs_save_patch = mocker.patch("storage_hooks.file_system.FileSystemHook.save")
     mocker.patch("storage_hooks.storage_hooks.DatabaseHook.fetch_tags")
     mocker.patch(
-        "storage_hooks.storage_hooks.DatabaseHook.create_receipt", return_value=1
+        "storage_hooks.storage_hooks.DatabaseHook.create_receipt",
+        return_value=test_receipt,
     )
     response = test_client.post("/api/receipt/", data=data)
     response_json = cast(Any, response.json)
 
     assert response.status_code == 200
     assert response_json["id"] == 1
+    assert response_json["name"] == "Test"
+    assert len(response_json["tags"]) >= 1
+    assert response_json["tags"][0] == 1
     assert fs_save_patch.call_count == 1
 
     fs_save_patch.assert_called_once_with(b"", "test.jpg")
@@ -79,7 +91,7 @@ def test_upload_receipt_missing_filename(test_client: FlaskClient):
     data = {"file": (io.BytesIO(b"test"), "")}
 
     response = test_client.post(
-        "/api/receipt/upload", data=data, content_type="multipart/form-data"
+        "/api/receipt/", data=data, content_type="multipart/form-data"
     )
 
     assert response.status_code == 404

@@ -1,6 +1,6 @@
 import io
 from typing import Any, cast
-from flask import Flask
+from flask import Flask, json
 from flask.testing import FlaskClient
 
 import pytest
@@ -8,7 +8,6 @@ import modulefinder
 import sys
 import pathlib
 
-from werkzeug.wrappers import response
 from receipt import Receipt, Tag
 
 file_path = pathlib.Path(__file__).absolute()
@@ -169,3 +168,22 @@ def test_fetch_receipt_missing_key(test_client: FlaskClient, mocker):
 
     assert j["error_name"] == "Missing Key Error"
     assert j["error_message"] == "The key, 1, was not found in the database"
+
+
+def test_fetch_many_keys(test_client: FlaskClient, mocker):
+    test_receipts = [
+        Receipt(id=1),
+        Receipt(id=2),
+        Receipt(id=3),
+    ]
+
+    fetch_receipts_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipts",
+        return_value=test_receipts,
+    )
+
+    response = test_client.get("/api/receipt/")
+
+    assert response.status_code == 200
+    assert len(cast(Any, response.json)) == 3
+    fetch_receipts_mock.assert_called_once()

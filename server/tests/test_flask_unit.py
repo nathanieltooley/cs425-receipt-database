@@ -117,3 +117,17 @@ def test_view_receipt(test_client: FlaskClient, mocker):
 
     fetch_receipt_mock.assert_called_once_with(1)
     fetch_mock.assert_called_once_with("~/test/test.jpg")
+
+
+def test_view_receipt_no_receipt(test_client: FlaskClient, mocker):
+    mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt", return_value=None
+    )
+
+    response = test_client.get("/api/receipt/1/image")
+
+    j = cast(Any, response.json)
+
+    assert response.status_code == 404
+    assert j["error_name"] == "Missing Key Error"
+    assert j["error_message"] == "The key, 1, was not found in the database"

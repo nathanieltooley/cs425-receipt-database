@@ -7,6 +7,8 @@ import pytest
 import modulefinder
 import sys
 import pathlib
+
+from werkzeug.wrappers import response
 from receipt import Receipt, Tag
 
 file_path = pathlib.Path(__file__).absolute()
@@ -100,7 +102,9 @@ def test_upload_receipt_missing_filename(test_client: FlaskClient):
 
 def test_view_receipt(test_client: FlaskClient, mocker):
     test_image = b"test image"
-    test_receipt = Receipt(id=1, name="Test", storage_key="~/test/test.jpg")
+    test_receipt = Receipt(
+        id=1, name="Test", storage_key="~/test/test.jpg", upload_dt="Now"
+    )
 
     fetch_receipt_mock = mocker.patch(
         "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt",
@@ -113,7 +117,9 @@ def test_view_receipt(test_client: FlaskClient, mocker):
 
     response = test_client.get("/api/receipt/1/image")
 
+    assert response.status_code == 200
     assert response.data == test_image
+    assert response.headers["Upload-Date"] is not None
 
     fetch_receipt_mock.assert_called_once_with(1)
     fetch_mock.assert_called_once_with("~/test/test.jpg")
@@ -131,3 +137,19 @@ def test_view_receipt_no_receipt(test_client: FlaskClient, mocker):
     assert response.status_code == 404
     assert j["error_name"] == "Missing Key Error"
     assert j["error_message"] == "The key, 1, was not found in the database"
+
+
+def test_fetch_receipt(test_client: FlaskClient, mocker):
+    test_receipt = Receipt(id=1, name="Test", storage_key="~/test/test.jpg")
+
+    fetch_receipt_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt",
+        return_value=test_receipt,
+    )
+
+    response = test_client.get("/api/receipt/1/")
+
+    assert response.status_code == 200
+    assert response.json == test_receipt.export()
+
+    fetch_receipt_mock.assert_called_once_with(1)

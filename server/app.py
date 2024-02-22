@@ -121,7 +121,7 @@ def create_app(file_hook=None, meta_hook=None):
         if receipt is None:
             return error_response(
                 404,
-                "No such key",
+                "Missing Key Error",
                 f"The key, {id}, was not found in the database",
             )
 

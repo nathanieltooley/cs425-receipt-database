@@ -1,63 +1,220 @@
+# Overview
+
+## All Endpoints
+- Receipts
+  - `/api/receipt/`
+    - `GET`: [Fetch Receipts](#fetch-receipts)
+  - `/api/receipt/`
+    - `POST`: [Upload Receipt](#upload-receipt)
+  - `/api/receipt/<id>/`
+    - `GET`: [Fetch Receipt]
+  - `/api/receipt/<id>/image`
+    - `GET`: [View Receipt](#view-receipt)
+  - `/api/receipt/<id>/`
+    - `DELETE`: [Delete Receipt](#delete-receipt)
+- Tags
+  - `/api/tag/`
+    - `GET`: [Fetch Tags](#fetch-tags)
+  - `/api/tag/`
+    - `POST`: [Add Tag](#add-tag)
+  - `/api/tag/<id>`
+    - `GET`: [Fetch Tag](#fetch-tag)
+  - `/api/tag/<id>`
+    - `DELETE`: [Delete Tag](#delete-tag)
+
+## Responses
+For more information about HTTP Responses 
+see the [MDN Article](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
+
+### Successful Responses
+These responses indicate successful processing of the client's request.
+These will be mentioned for each applicable endpoint 
+with body / header format (if applicable),
+but meaning will may not be elaborated on.
+- **`200` - OK**
+  - Successful processing of the request
+  - Body contains requested or resulting resource.
+- **`201` - Created**
+  - Successfully created resource from request
+  - Unclear when to use over `200`
+- **`204` - No Content**
+  - Successful processing of the request
+  - Body is empty
+
+### Client Error Responses
+These responses indicate an issue with the client's request.
+These will be mentioned for each applicable endpoint,
+but meaning will may not be elaborated on.
+- **`400` - Bad Request**
+  - The request is missing required information or is formatted incorrectly.
+- **`401` - Unauthorized (Unauthenticated)**
+  - The request is missing or has invalid authentication required for this method
+  - (Not Implemented)
+- **`403` - Forbidden**
+  - The request's authentication does not grant it access to the resource.
+  - (Not Implemented)
+- **`404` - Not Found**
+  - The requested resource does not exist
+
+### Server Error Responses
+These responses indicated an issue on the server side that a client cannot fix themselves. 
+- **`500` - Internal Server Error**
+  - Generic error occurred while processing the request
+  - Possible on any request
+- **`501` - Not Implemented**
+  - The functionality for this request has not been implemented yet
+  - Will be stated per applicable endpoint
+- **`507` - Insufficient Storage**
+  - The connected file storage or database is out of space
+  - Possible on any `POST` and `PUT` request
+
+### Common JSON Objects
+These JSON structures are sent in multiple places.
+> Note: Any array / list (here and elsewhere) may be empty!
+#### Receipt JSON
+```json5
+{
+    "id": <id>,  // Integer
+    "name": <name>,  // String
+    "upload_dt": <upload_dt>,  // UTC, ~ISO Format
+    "tags": [<tag_id>, ...],  // List of Integer
+}
+```
+#### Tag JSON
+```json5
+{
+    "id": <id>,  // Integer
+    "name": <name>,  // String
+}
+```
+
 # Receipts
-## Upload (POST)
-Full endpoint - **/api/receipt/upload**
+## Upload Receipt
+Uploads a file to the system. 
 
-### Usage
-Send a POST request that contains a _file_ key where the file you wish to upload is stored. This file must have a valid filename.
+- Endpoint: **`/api/receipt/`**
+- Method: `POST`
+- `POST` Data:
+  - `file`
+    - The file to be uploaded.
+    - Filename will be used as key to fetch later.
+      - Must be a valid filename for the file store being used.
+  - `name`
+    - A user-friendly name for the receipt.
+    - May be non-unique
+  - `tag`
+    - The id for a tag to apply to the receipt
+    - Can be repeated for any number of (existing) tags
 
-### User Errors
-**Missing Key - 200**: When an upload request does not specify a "file" key where the file is stored
-**Missing Filename - 400**: When an upload request is sent without a filename
-**Missing File - 400**: When an upload request is sent without a file
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Receipt JSON>`
+- **`400` - Missing Key**
+  - When an upload request does not specify a "file" key where the file is stored
+- **`400` - Missing Filename**
+  - When an upload request is sent without a filename
+- **`400` - Missing File**
+  - When an upload request is sent without a file
 
-## View Receipt (GET)
-Full endpoint - **/api/receipt/view/<file_key>**, where file_key is the name of the key you wish to view
+## View Receipt
+Fetch a receipt's image.
+- Endpoint: `/api/receipt/<id>/image/`
+  - `id`: The id of the receipt you wish to view the image of
+- Method `GET`
 
-### Usage
-Send a GET request to the **/api/receipt/view** endpoint and specify a file_key. This key is the key that represents the file in the DB.
+### Responses
+- **`200` - OK**
+  - Content-Type: Any
+  - `Body` - The image of the requested receipt
+- **`404` - No Such Key**
+  - If the requested key is not found in the database
 
-### User Errors
-**No Such Key - 400**: If the requested key is not found in the database
+## Fetch Receipt
+Fetch data of one receipt 
+- Endpoint: `/api/receipt/<id>/`
+  - `id`: The id of the receipt you wish to fetch
+- Method: `GET`
 
-## Fetch Many Keys (GET)
-Full endpoint - **/api/receipt/fetch_many_keys**
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Receipt JSON>`
 
-### Usage
-Send a GET request. Currently returns all known keys inside the database.
+## Fetch Receipts
+Fetch all know receipt keys
+- Endpoint: `/api/receipt/`
+- Method: `GET`
 
-## Delete (GET)
-Full endpoint - **/api/receipt/delete/<file_key>**, where file_key is the name of the key you wish to delete
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `[<Receipt JSON>, ...]`
 
-### Usage
-Send a GET request to the **/api/receipt/delete/** endpoint and specify a file_key. This key is the key that represents the file in the DB.
+## Delete Receipt
+- Endpoint: `/api/receipt/<id>`
+  - `id`: The id of the receipt you wish to delete
+- Method: `DELETE`
+
+### Responses
+- **`204` - No Content**
+  - Receipt existed and has been removed
+- **`404` - Not Found**
+  - Receipt does not exist
+  - Means either:
+    - Receipt already deleted
+    - Incorrect Key
+
 
 # Tags
-## Add (POST)
-Full endpoint - **/api/tag/**
+## Add Tag
+- Endpoint:  `/api/tag/`
+- Method: `POST`
+- `POST` Data:
+  - `name`
+    - A user-friendly name for the tag
+    - May be non-unique
 
-### Usage
-Send POST request to the endpoint, specifying the "name=<tag_name>" in the POST data.
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Tag JSON>`
+- **`400` - Missing Name**
+  - When an upload request does not specify a tag name
 
-### User Errors
-**Missing Name - 400**: When an upload request does not specify a tag name
+## Fetch Tag
+- Endpoint - `/api/tag/<id>`
+  - `tag_id`: Int id of the tag you wish to fetch
+- Method: `GET`
 
-## Fetch Tag (GET)
-Full endpoint - **/api/tag/<int\:tag_id>**, where tag_id is int id of the tag you wish to fetch
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Tag JSON>`
+- **`404` - No Such Tag**
+  - If the requested tag id is not found in the database
 
-### Usage
-Send a GET request to the **/api/tag/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+## Fetch Tags
+Fetch all tag ids and names
+- Endpoint: `/api/tag/`
+- Method: `GET`
 
-### User Errors
-**No Such Tag - 400**: If the requested tag id is not found in the database
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `[<Tag JSON>, ...]`
 
-## Fetch All Tags (GET)
-Full endpoint - **/api/tag/**
+## Delete Tag
+Delete the specified tag
+- Endpoint - `/api/tag/<id>`
+  - `id`: The int id of the key you wish to delete
+- Method: `DELETE`
 
-### Usage
-Send a GET request. Currently returns all known tags inside the database.
-
-## Delete (DELETE)
-Full endpoint - **/api/tag/<int\:tag_id>**, where tag_id is the int id of the key you wish to delete
-
-### Usage
-Send a GET request to the **/api/tag/** endpoint and specify a tag_id. This is the id that represents the tag in the DB.
+### Responses
+- **`204` - No Content**
+  - Tag existed and has been removed
+- **`404` - Not Found**
+  - Tag does not exist
+  - Means either:
+    - Tag already deleted
+    - Incorrect Key

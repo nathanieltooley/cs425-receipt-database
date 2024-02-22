@@ -7,15 +7,20 @@ import 'package:http/http.dart' as http;
 
 
 class Api {
-  static Future<void> uploadFile(String filePath) async {
+  static Future<void> uploadFile(String filePath, fileName, fileTag) async {
 
     try {
-      // need to change
-      Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/upload');
+      Uri uri = Uri.parse('http://127.0.0.1:5000/api/receipt/');
       var request = http.MultipartRequest('POST', uri);
 
       // Attach the file
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      // Attach file name user sets
+      request.files.add(await http.MultipartFile.fromString('name', fileName));
+
+      // Attach tag- if left empty, do not attach tag
+      request.files.add(await http.MultipartFile.fromString('tag', fileTag));
       
       // Send the request
       var response = await request.send();
@@ -32,8 +37,7 @@ class Api {
   }
 //
   Future<Uint8List> fetchReceiptData(int fileKey) async {
-    // need to change
-    final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/view/$fileKey'));
+    final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/$fileKey/image'));
 
     if (response.statusCode == 200) {
       return response.bodyBytes;
@@ -47,7 +51,7 @@ class Api {
       final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/tag/'));
 
       if (response.statusCode == 200) {
-        final List<dynamic> tagsJson = json.decode(response.body)['results'];
+        final List<dynamic> tagsJson = json.decode(response.body);
         final List<String> tags = [];
 
         for (final tag in tagsJson) {
@@ -65,22 +69,41 @@ class Api {
     }
   }
 
+  Future<String> fetchTagName(int tagId) async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/tag/$tagId'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> tagJson = json.decode(response.body);
+        final String tagName = tagJson['name'];
+        return tagName;
+      } else if (response.statusCode == 404) {
+        throw Exception('Tag not found');
+      } else {
+        throw Exception('Failed to fetch tag. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching tag: $e');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchManyReceipts() async {
     try {
-      // need to change
-      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/fetch_many_keys'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/api/receipt/'));
       if (response.statusCode == 200) {
-        final List<dynamic> receiptsJson = json.decode(response.body)['results'];
+        final List<dynamic> receiptsJson = json.decode(response.body);
         
         // Fetch details for each receipt and create a map
         final List<Map<String, dynamic>> receiptDataList = [];
         for (final receiptJson in receiptsJson) {
-          int tempReceiptId = receiptJson['id'];
-          final String receiptId = tempReceiptId.toString();
-          final List<dynamic> tagsJson = receiptJson['metadata']['tags'];
+          final int tempReceiptId = receiptJson['id'];
+          final String receiptId = receiptJson['name'];
+          final List<dynamic> tagIds = receiptJson['tags'];
 
-          // Convert tag IDs to strings
-          final List<String> tags = tagsJson.map((tag) => tag.toString()).toList();
+          // Fetch tag names associated with tag IDs
+          final List<Future<String>> tagFutures = tagIds.map((tagId) => fetchTagName(tagId)).toList();
+          final List<String> tags = await Future.wait(tagFutures);
+
+           print('Tag names for receipt $receiptId: $tags');
 
           // Fetch image data for the receipt (assuming you have a method for this)
           final Uint8List imageData = await fetchReceiptData(tempReceiptId);
@@ -105,5 +128,6 @@ class Api {
       throw Exception('Error fetching many receipts: $e');
     }
   }
+
 
 }

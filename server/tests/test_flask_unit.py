@@ -153,3 +153,19 @@ def test_fetch_receipt(test_client: FlaskClient, mocker):
     assert response.json == test_receipt.export()
 
     fetch_receipt_mock.assert_called_once_with(1)
+
+
+def test_fetch_receipt_missing_key(test_client: FlaskClient, mocker):
+    fetch_receipt_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt",
+        return_value=None,
+    )
+
+    response = test_client.get("/api/receipt/1/")
+
+    assert response.status_code == 404
+
+    j = cast(Any, response.json)
+
+    assert j["error_name"] == "Missing Key Error"
+    assert j["error_message"] == "The key, 1, was not found in the database"

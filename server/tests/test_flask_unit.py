@@ -96,3 +96,24 @@ def test_upload_receipt_missing_filename(test_client: FlaskClient):
 
     assert response.status_code == 404
     assert cast(Any, response.json)["error_name"] == "Missing Filename"
+
+
+def test_view_receipt(test_client: FlaskClient, mocker):
+    test_image = b"test image"
+    test_receipt = Receipt(id=1, name="Test", storage_key="~/test/test.jpg")
+
+    fetch_receipt_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt",
+        return_value=test_receipt,
+    )
+    fetch_mock = mocker.patch(
+        "storage_hooks.file_system.FileSystemHook.fetch",
+        return_value=test_image,
+    )
+
+    response = test_client.get("/api/receipt/1/image")
+
+    assert response.data == test_image
+
+    fetch_receipt_mock.assert_called_once_with(1)
+    fetch_mock.assert_called_once_with("~/test/test.jpg")

@@ -152,7 +152,7 @@ def create_app(file_hook=None, meta_hook=None):
         if (receipt := meta_hook.fetch_receipt(id)) is None:
             return error_response(
                 404,
-                "No image found",
+                "Missing Key Error",
                 f"The key, {id}, was not found in the database",
             )
         return receipt.export()

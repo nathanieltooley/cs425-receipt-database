@@ -209,8 +209,32 @@ def test_upload_tag(test_client: FlaskClient, mocker):
     assert response.status_code == 200
 
 
-def test_upload_tag_no_name(test_client: FlaskClient, mocker):
+def test_upload_tag_no_name(test_client: FlaskClient):
     response = test_client.post("/api/tag/")
 
     assert response.status_code == 404
     assert cast(Any, response.json)["error_name"] == "Missing Name"
+
+
+def test_fetch_tag(test_client: FlaskClient, mocker):
+    fetch_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_tag",
+        return_value=Tag(name="test"),
+    )
+
+    response = test_client.get("/api/tag/1")
+
+    assert response.status_code == 200
+    fetch_tag_mock.assert_called_once_with(1)
+
+
+def test_fetch_no_tag(test_client: FlaskClient, mocker):
+    fetch_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_tag",
+        return_value=None,
+    )
+
+    response = test_client.get("/api/tag/1")
+
+    assert response.status_code == 404
+    assert cast(Any, response.json)["error_name"] == "Tag Not Found"

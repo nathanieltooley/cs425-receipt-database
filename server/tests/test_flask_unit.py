@@ -207,3 +207,10 @@ def test_upload_tag(test_client: FlaskClient, mocker):
     response = test_client.post("/api/tag/", data=data)
 
     assert response.status_code == 200
+
+
+def test_upload_tag_no_name(test_client: FlaskClient, mocker):
+    response = test_client.post("/api/tag/")
+
+    assert response.status_code == 404
+    assert cast(Any, response.json)["error_name"] == "Missing Name"

@@ -187,3 +187,23 @@ def test_fetch_many_keys(test_client: FlaskClient, mocker):
     assert response.status_code == 200
     assert len(cast(Any, response.json)) == 3
     fetch_receipts_mock.assert_called_once()
+
+
+def test_delete_receipt(test_client: FlaskClient, mocker):
+    mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.delete_receipt",
+    )
+    mocker.patch("storage_hooks.file_system.FileSystemHook.delete")
+
+    response = test_client.delete("/api/receipt/1")
+
+    assert response.status_code == 204
+
+
+def test_upload_tag(test_client: FlaskClient, mocker):
+    data = {"name": "tag"}
+    mocker.patch("storage_hooks.storage_hooks.DatabaseHook.create_tag")
+
+    response = test_client.post("/api/tag/", data=data)
+
+    assert response.status_code == 200

@@ -238,3 +238,25 @@ def test_fetch_no_tag(test_client: FlaskClient, mocker):
 
     assert response.status_code == 404
     assert cast(Any, response.json)["error_name"] == "Tag Not Found"
+
+
+def test_fetch_tags(test_client: FlaskClient, mocker):
+    fetch_tags_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_tags", return_value=[]
+    )
+
+    response = test_client.get("/api/tag/")
+
+    assert response.status_code == 200
+    fetch_tags_mock.assert_called_once()
+
+
+def test_delete_tag(test_client: FlaskClient, mocker):
+    delete_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.delete_tag"
+    )
+
+    response = test_client.delete("/api/tag/1")
+
+    assert response.status_code == 204
+    delete_tag_mock.assert_called_once_with(1)

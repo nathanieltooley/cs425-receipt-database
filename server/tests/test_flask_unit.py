@@ -13,14 +13,14 @@ from receipt import Receipt, Tag
 file_path = pathlib.Path(__file__).absolute()
 sys.path.append(str(file_path.parent.parent))
 from storage_hooks.SQLite3 import SQLite3
-from tests.temp_hooks import MemorySQLite3, FileSystemHook
+from tests.temp_hooks import MemorySQLite3, file_system
 
 
 @pytest.fixture()
 def app():
     from app import create_app
 
-    app = create_app(FileSystemHook(), MemorySQLite3())
+    app = create_app(file_system(), MemorySQLite3())
 
     app.config.update(
         {

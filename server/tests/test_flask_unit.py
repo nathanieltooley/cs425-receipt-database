@@ -4,6 +4,7 @@ from flask import Flask, json
 from flask.testing import FlaskClient
 
 import pytest
+from pytest_mock import MockerFixture
 import modulefinder
 import sys
 import pathlib
@@ -249,6 +250,26 @@ def test_fetch_tags(test_client: FlaskClient, mocker):
 
     assert response.status_code == 200
     fetch_tags_mock.assert_called_once()
+
+
+def test_update_tag(test_client: FlaskClient, mocker: MockerFixture):
+    base_tag = Tag(id=1, name="start")
+    updated_tag = Tag(id=1, name="end")
+    fetch_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_tag", return_value=base_tag
+    )
+    update_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.update_tag", return_value=updated_tag
+    )
+
+    for i in range(2):  # To test Idempotence
+        response = test_client.put("/api/tag/1/", data={"name": "end"})
+
+        assert response.status_code == 200
+        assert response.json == updated_tag.export()
+        # Pytest seems to override assert X == Y without calling the __eq__ on X nor Y
+        assert fetch_tag_mock.call_args.__eq__({"tag_id": 1})
+        assert update_tag_mock.call_args.__eq__({"name": "end"})
 
 
 def test_delete_tag(test_client: FlaskClient, mocker):

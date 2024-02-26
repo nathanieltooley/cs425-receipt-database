@@ -4,23 +4,23 @@
 - Receipts
   - `/api/receipt/`
     - `GET`: [Fetch Receipts](#fetch-receipts)
-  - `/api/receipt/`
     - `POST`: [Upload Receipt](#upload-receipt)
   - `/api/receipt/<id>/`
-    - `GET`: [Fetch Receipt]
+    - `GET`: [Fetch Receipt](#fetch-receipt)
+    - `PUT`: [Update Receipt](#update-receipt)
+    - `DELETE`: [Delete Receipt](#delete-receipt)
   - `/api/receipt/<id>/image`
     - `GET`: [View Receipt](#view-receipt)
-  - `/api/receipt/<id>/`
-    - `DELETE`: [Delete Receipt](#delete-receipt)
 - Tags
   - `/api/tag/`
     - `GET`: [Fetch Tags](#fetch-tags)
-  - `/api/tag/`
     - `POST`: [Add Tag](#add-tag)
   - `/api/tag/<id>`
     - `GET`: [Fetch Tag](#fetch-tag)
-  - `/api/tag/<id>`
+    - `PUT`: [Update Tag](#update-tag)
     - `DELETE`: [Delete Tag](#delete-tag)
+
+> Note: All data under "`PUT` Data" is optional. 
 
 ## Responses
 For more information about HTTP Responses 
@@ -151,6 +151,40 @@ Fetch all know receipt keys
   - Content-Type: `text/json`
   - Body: `[<Receipt JSON>, ...]`
 
+## Update Receipt
+Update a file on the system. 
+
+- Endpoint: **`/api/receipt/<id>`**
+- Method: `PUT`
+- `PUT` Data:
+  - `file`
+    - The file to replace current.
+    - Filename is ignored.
+  - `name`
+    - A user-friendly name for the receipt.
+    - May be non-unique
+  - `tag`
+    - The id for a tag to apply to the receipt
+    - Can be repeated for any number of (existing) tags
+    - These will ***replace*** existing tags
+      - Takes effect before `add tag` and `remove tag`
+  - `add tag`
+    - The id for a tag to add to the receipt
+    - Can be repeated for any number of (existing) tags
+    - These will ***append*** to existing tags
+  - `remove tag`
+    - The id for a tag to remove from the receipt
+    - Can be repeated for any number of (existing) tags
+    - These will ***remove*** from existing tags
+
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Receipt JSON>`
+- **`404` - Not Found**
+  - The receipt does not exist
+
+
 ## Delete Receipt
 - Endpoint: `/api/receipt/<id>`
   - `id`: The id of the receipt you wish to delete
@@ -203,6 +237,21 @@ Fetch all tag ids and names
 - **`200` - OK**
   - Content-Type: `text/json`
   - Body: `[<Tag JSON>, ...]`
+
+## Update Tag
+- Endpoint:  `/api/tag/<id>`
+- Method: `PUT`
+- `PUT` Data:
+  - `name`
+    - A user-friendly name for the tag
+    - May be non-unique
+
+### Responses
+- **`200` - OK**
+  - Content-Type: `text/json`
+  - Body: `<Tag JSON>`
+- **`404` - Not Found**
+  - Tag does not exist
 
 ## Delete Tag
 Delete the specified tag

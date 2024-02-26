@@ -60,7 +60,7 @@ class Tag(Base):
 class Receipt(Base):
     __tablename__ = "receipt"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(default="Unnamed")
+    name: Mapped[str | None] = mapped_column(default="Unnamed")
     storage_key: Mapped[str]
     upload_dt: Mapped[datetime] = mapped_column(
         type_=TZDateTime, server_default=func.now()

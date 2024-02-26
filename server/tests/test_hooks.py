@@ -45,6 +45,15 @@ class TestDatabaseHook:
         return [t.id for t in tags]
 
     @pytest.fixture
+    def tag_less_receipt(self, hook) -> Receipt:
+        receipt = Receipt(storage_key="where?", tags=[])
+        receipt = hook.create_receipt(receipt)
+        yield receipt
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hook.delete_objects(receipt)
+
+    @pytest.fixture
     def receipt(self, hook, tags) -> Receipt:
         receipt = Receipt(storage_key="where?", tags=tags)
         receipt = hook.create_receipt(receipt)
@@ -67,8 +76,27 @@ class TestDatabaseHook:
 
     # fetch_receipts
 
-    # def test_update_receipt(self, receipt, tags):
-    #     return NotImplemented
+    def test_update_receipt(self, hook, tag_less_receipt, tags):
+        receipt = tag_less_receipt
+        tag_ids = [tag.id for tag in tags]
+        hook.update_receipt(receipt.id, name="New Name")
+        assert hook.fetch_receipt(receipt.id).name == "New Name"
+
+        hook.update_receipt(receipt.id, set_tags=tag_ids)
+        assert hook.fetch_receipt(receipt.id).tags == tags
+
+        if len(tags) != 0:
+            hook.update_receipt(receipt.id, remove_tags=[tag_ids[0]])
+            f_tags = hook.fetch_receipt(receipt.id).tags
+            assert len(f_tags) == len(tags[1:])
+            for tag in tags[1:]:
+                assert tag in f_tags
+
+            hook.update_receipt(receipt.id, add_tags=[tag_ids[0]])
+            f_tags = hook.fetch_receipt(receipt.id).tags
+            assert len(f_tags) == len(tags)
+            for tag in tags:
+                assert tag in f_tags
 
     def test_delete_receipt(self, hook, receipt):
         assert hook.delete_receipt(receipt.id) == receipt.storage_key
@@ -83,7 +111,9 @@ class TestDatabaseHook:
         for tag in fetched:
             assert tag in tags
 
-    # def test_update_tag(self, hook, tags):
+    def test_update_tag(self, hook, tag):
+        tag.name = "new name"
+        assert hook.update_tag(tag).export() == tag.export()
 
     def test_delete_tag(self, hook, tag):
         hook.delete_tag(tag.id)

@@ -4,6 +4,7 @@ from flask import Flask, json
 from flask.testing import FlaskClient
 
 import pytest
+from pytest_mock import MockerFixture
 import modulefinder
 import sys
 import pathlib
@@ -138,6 +139,70 @@ def test_view_receipt_no_receipt(test_client: FlaskClient, mocker):
     assert j["error_message"] == "The key, 1, was not found in the database"
 
 
+def test_update_receipt(test_client: FlaskClient, mocker: MockerFixture):
+    in_receipt = Receipt(id=1, name="In", storage_key="key")
+    out_receipt = Receipt(id=1, name="Out", storage_key="key")
+
+    update_receipt_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.update_receipt",
+        return_value=out_receipt,
+    )
+    update_image_mock = mocker.patch(
+        "storage_hooks.file_system.FileSystemHook.replace",
+        return_value="",
+    )
+
+    response = test_client.put("/api/receipt/1", data={"name": "Out"})
+    assert response.status_code == 200
+    assert response.json == out_receipt.export()
+    # Pytest seems to override assert X == Y without calling the __eq__ on X nor Y
+    assert update_receipt_mock.call_args.__eq__(
+        {
+            "receipt_id": in_receipt.id,
+            "name": "Out",
+            "set_tags": None,
+            "add_tags": [],
+            "remove_tags": [],
+        }
+    )
+
+    response = test_client.put(
+        "/api/receipt/1", data={"tag": 1, "add tag": 1, "remove tag": 1}
+    )
+    assert response.status_code == 200
+    assert response.json == out_receipt.export()
+    # Pytest seems to override assert X == Y without calling the __eq__ on X nor Y
+    assert update_receipt_mock.call_args.__eq__(
+        {
+            "receipt_id": in_receipt.id,
+            "name": None,
+            "set_tags": [1],
+            "add_tags": [1],
+            "remove_tags": [1],
+        }
+    )
+
+    update_bytes = b"update_bytes"
+    response = test_client.put(
+        "/api/receipt/1", data={"file": (io.BytesIO(update_bytes), "test.jpg")}
+    )
+    assert response.status_code == 200
+    assert response.json == out_receipt.export()
+    # Pytest seems to override assert X == Y without calling the __eq__ on X nor Y
+    assert update_receipt_mock.call_args.__eq__(
+        {
+            "receipt_id": in_receipt.id,
+            "name": None,
+            "set_tags": None,
+            "add_tags": [],
+            "remove_tags": [],
+        }
+    )
+    assert update_image_mock.call_args.__eq__(
+        {"location": out_receipt.storage_key, "image": update_bytes}
+    )
+
+
 def test_fetch_receipt(test_client: FlaskClient, mocker):
     test_receipt = Receipt(id=1, name="Test", storage_key="~/test/test.jpg")
 
@@ -249,6 +314,26 @@ def test_fetch_tags(test_client: FlaskClient, mocker):
 
     assert response.status_code == 200
     fetch_tags_mock.assert_called_once()
+
+
+def test_update_tag(test_client: FlaskClient, mocker: MockerFixture):
+    base_tag = Tag(id=1, name="start")
+    updated_tag = Tag(id=1, name="end")
+    fetch_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_tag", return_value=base_tag
+    )
+    update_tag_mock = mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.update_tag", return_value=updated_tag
+    )
+
+    for i in range(2):  # To test Idempotence
+        response = test_client.put("/api/tag/1/", data={"name": "end"})
+
+        assert response.status_code == 200
+        assert response.json == updated_tag.export()
+        # Pytest seems to override assert X == Y without calling the __eq__ on X nor Y
+        assert fetch_tag_mock.call_args.__eq__({"tag_id": 1})
+        assert update_tag_mock.call_args.__eq__({"name": "end"})
 
 
 def test_delete_tag(test_client: FlaskClient, mocker):

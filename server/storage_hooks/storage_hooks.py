@@ -7,7 +7,7 @@ from sqlalchemy import Engine, select, delete, asc, desc
 from sqlalchemy.orm import Session, selectinload
 
 from receipt import Receipt, Base, Tag
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Iterable
 
 UTC = dt.timezone.utc
 
@@ -77,8 +77,35 @@ class DatabaseHook(abc.ABC):
         with Session(self.engine) as session:
             return session.scalars(stmt).all()
 
-    def update_receipt(self, diff: dict) -> Receipt:
-        raise NotImplementedError
+    def update_receipt(
+        self,
+        receipt_id: int,
+        name: str | None = None,
+        set_tags: Iterable[int] | None = None,
+        add_tags: Iterable[int] | None = None,
+        remove_tags: Iterable[int] | None = None,
+    ) -> Receipt:
+        with Session(self.engine) as session:
+            receipt = session.get_one(Receipt, receipt_id)
+            if name is not None:
+                receipt.name = name
+
+            if set_tags is not None:
+                tag_ids = set_tags
+            else:
+                tag_ids = [tag.id for tag in receipt.tags]
+            tag_ids = set(tag_ids)
+            if add_tags is not None:
+                tag_ids.update(add_tags)
+            if remove_tags is not None:
+                tag_ids.difference_update(remove_tags)
+
+            receipt.tags = session.scalars(
+                select(Tag).filter(Tag.id.in_(tag_ids))
+            ).all()
+
+            session.commit()
+        return self.fetch_receipt(receipt_id)
 
     def delete_receipt(self, id_: int) -> str:
         with Session(self.engine) as session:
@@ -110,8 +137,8 @@ class DatabaseHook(abc.ABC):
                 stmt = stmt.filter(Tag.id.in_(tag_ids))
             return session.scalars(stmt).all()
 
-    def update_tag(self, diff: dict) -> Tag:
-        raise NotImplementedError
+    def update_tag(self, updated_tag: Tag) -> Tag:
+        return self.create_tag(updated_tag)
 
     def delete_tag(self, tag_id: int) -> None:
         with Session(self.engine) as session:

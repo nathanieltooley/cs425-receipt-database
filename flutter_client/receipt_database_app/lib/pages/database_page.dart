@@ -51,8 +51,21 @@ class _MyListViewState extends State<MyListView> {
     }
   }
 
-  void _filterReceipts(String query) {
+ void _filterReceipts(String query) {
     setState(() {
+      filteredReceipts = receiptDataList.where((receipt) {
+        final String title = receipt['title'].toLowerCase();
+        final List<String> tags = receipt['tags'];
+
+        // Check if the title contains the query
+        final bool titleMatches = title.contains(query.toLowerCase());
+
+        // Check if any tag contains the query
+        final bool tagsMatch = tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()));
+
+        // Return true if either title or tags match the query
+        return titleMatches || tagsMatch;
+      }).toList();
       filteredReceipts = receiptDataList
           .where((receipt) =>
               receipt['title'].toLowerCase().contains(query.toLowerCase()))
@@ -85,7 +98,7 @@ class _MyListViewState extends State<MyListView> {
             controller: _searchController,
             onChanged: _filterReceipts,
             decoration: InputDecoration(
-              hintText: 'Search by name...',
+              hintText: 'Search by name or tag...',
             ),
           ),
         ),
@@ -163,7 +176,11 @@ class DatabasePage extends StatefulWidget {
 
 class _DatabasePageState extends State<DatabasePage> {
   String _filePath = '';
+  String _fileName = ''; 
+  String _tag = ''; 
   TextEditingController _searchController = TextEditingController();
+  TextEditingController _nameController = TextEditingController(); 
+  TextEditingController _tagController = TextEditingController();
 
   // Allows user to pick a file to upload
   void _pickAndUploadFile() async {
@@ -178,10 +195,12 @@ class _DatabasePageState extends State<DatabasePage> {
     if (filePath != null) {
       setState(() {
         _filePath = filePath;
+        _fileName = _nameController.text; 
+        _tag = _tagController.text;
       });
 
       try {
-        await Api.uploadFile(_filePath);
+         await Api.uploadFile(_filePath, _fileName, _tag);
         print('File uploaded successfully');
       } catch (e) {
         print('Error uploading file: $e');
@@ -210,6 +229,20 @@ class _DatabasePageState extends State<DatabasePage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+                    // Text field for custom file name
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              hintText: 'Enter file name...',
+            ),
+          ),
+          // Text field for tag (optional)
+          TextField(
+            controller: _tagController,
+            decoration: InputDecoration(
+              hintText: 'Enter tag (optional)...',
+            ),
+          ),
           ElevatedButton(
             onPressed: _pickAndUploadFile,
             child: Text('Upload Receipt'),

@@ -78,6 +78,7 @@ class Receipt(Base):
         return {
             "id": self.id,
             "name": self.name,
+            "storage_key": self.storage_key,
             "upload_dt": str(self.upload_dt),
             "tags": [t.id for t in self.tags],
         }

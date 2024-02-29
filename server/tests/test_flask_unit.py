@@ -72,6 +72,7 @@ def test_upload_receipt(test_client: FlaskClient, mocker):
     fs_save_patch.assert_called_once_with(b"", "test.jpg")
 
 
+
 def test_upload_receipt_missing_file_key(test_client: FlaskClient):
     response = test_client.post("/api/receipt/")
     response_json = cast(Any, response.json)

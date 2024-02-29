@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import '/components/api.dart';
 import '/pages/image_cache.dart' as MyImageCache; // Updated import statement
 import '/pages/view_receipt.dart';
 import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 class MyListView extends StatefulWidget {
   const MyListView({super.key});
@@ -17,7 +17,7 @@ class MyListView extends StatefulWidget {
 
 class _MyListViewState extends State<MyListView> {
   List<Map<String, dynamic>> receiptDataList = [];
-   List<Map<String, dynamic>> filteredReceipts = [];
+  List<Map<String, dynamic>> filteredReceipts = [];
   final MyImageCache.ImageCache imageCache = MyImageCache.ImageCache();
   final TextEditingController _searchController = TextEditingController();
 
@@ -28,17 +28,18 @@ class _MyListViewState extends State<MyListView> {
     fetchAndSetReceiptData();
   }
 
-
   Future<void> fetchAndSetReceiptData() async {
     try {
       // Make the API call using fetchManyReceipts
       final apiService = Api();
-      final List<Map<String, dynamic>> receipts = await apiService.fetchManyReceipts();
+      final List<Map<String, dynamic>> receipts =
+          await apiService.fetchManyReceipts();
 
       // Iterate through the receipts and add them to receiptDataList
       for (final receipt in receipts) {
         // Store in cache using the ImageCache instance
-        await imageCache.storeBytesInCache(receipt['imageData'], receipt['title']);
+        await imageCache.storeBytesInCache(
+            receipt['imageData'], receipt['title']);
       }
 
       // Set the state to update the UI with the new data
@@ -52,7 +53,7 @@ class _MyListViewState extends State<MyListView> {
     }
   }
 
-  void _filterReceipts(String query) {
+ void _filterReceipts(String query) {
     setState(() {
       filteredReceipts = receiptDataList.where((receipt) {
         final String title = receipt['title'].toLowerCase();
@@ -67,9 +68,27 @@ class _MyListViewState extends State<MyListView> {
         // Return true if either title or tags match the query
         return titleMatches || tagsMatch;
       }).toList();
+      filteredReceipts = receiptDataList
+          .where((receipt) =>
+              receipt['title'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
     });
   }
 
+  Future<Uint8List?> generateThumbnail(Uint8List imageData) async {
+    try {
+      img.Image? image = img.decodeImage(imageData);
+      if (image == null) {
+        print('Error decoding image.'); // Handle decoding error
+        return null;
+      }
+      img.Image thumbnail = img.copyResize(image, width: 100, height: 100);
+      return Uint8List.fromList(img.encodePng(thumbnail));
+    } catch (e) {
+      print('Error generating thumbnail: $e'); // Handle thumbnail generation error
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,25 +108,27 @@ class _MyListViewState extends State<MyListView> {
           child: ListView.builder(
             itemCount: filteredReceipts.length,
             itemBuilder: (context, index) {
-              final title = filteredReceipts[index]['title'] as String;
-              final List<String> tags = filteredReceipts[index]['tags'] as List<String>; // Extract tags
-              final imageData = filteredReceipts[index]['imageData'] as Uint8List;
+            final title = filteredReceipts[index]['title'] as String;
+            final List<String> tags = filteredReceipts[index]['tags'] as List<String>;
+            final imageData =
+                  filteredReceipts[index]['imageData'] as Uint8List;
 
               return Card(
                 elevation: 5,
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
                   title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title), // Display title
-                      SizedBox(height: 4),
-                      Wrap( // Display tags in a wrap widget
-                        spacing: 4,
-                        children: tags.map((tag) => Chip(label: Text(tag))).toList(), // Convert tags to chips
-                      ),
-                    ],
-                  ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title),
+                    SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: tags.map((tag) => Chip(label: Text(tag))).toList(),
+                    ),
+                  ],
+                ),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -119,16 +140,27 @@ class _MyListViewState extends State<MyListView> {
                       ),
                     );
                   },
-                  leading: CachedNetworkImage(
-                    imageUrl: filteredReceipts[index]['imageUrl'] as String,
-                    placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  leading: FutureBuilder<Uint8List?>(
+                    future: generateThumbnail(imageData),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError || snapshot.data == null) {
+                        return const Icon(Icons.error_outline);
+                      } else {
+                        return Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          width: 80, // Set the width for the thumbnail
+                          height: 80, // Set the height for the thumbnail
+                        );
+                      }
+                    },
                   ),
                 ),
               );
             },
-          )
-
+          ),
         ),
       ],
     );
@@ -146,7 +178,7 @@ class DatabasePage extends StatefulWidget {
 
 class _DatabasePageState extends State<DatabasePage> {
   String _filePath = '';
-    String _fileName = ''; 
+  String _fileName = ''; 
   String _tag = ''; 
   TextEditingController _searchController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
@@ -204,9 +236,7 @@ class _DatabasePageState extends State<DatabasePage> {
       });
 
       try {
-        String fileName = _nameController.text; // Retrieve the name from the text field
-        String tag = _tagController.text; // Retrieve the tag from the text field
-        await Api.uploadFile(_filePath, fileName, tag);
+         await Api.uploadFile(_filePath, _fileName, _tag);
         print('File uploaded successfully');
       } catch (e) {
         print('Error uploading file: $e');
@@ -235,7 +265,20 @@ class _DatabasePageState extends State<DatabasePage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          // Text field for custom file name
+                    // Text field for custom file name
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              hintText: 'Enter file name...',
+            ),
+          ),
+          // Text field for tag (optional)
+          TextField(
+            controller: _tagController,
+            decoration: InputDecoration(
+              hintText: 'Enter tag (optional)...',
+            ),
+          ),
           ElevatedButton(
             onPressed: _showUploadReceiptDialog,
             child: Text('Upload Receipt'),

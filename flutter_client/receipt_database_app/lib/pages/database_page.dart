@@ -13,6 +13,8 @@ class MyListView extends StatefulWidget {
   _MyListViewState createState() => _MyListViewState();
 }
 
+
+
 class _MyListViewState extends State<MyListView> {
   List<Map<String, dynamic>> receiptDataList = [];
   List<Map<String, dynamic>> filteredReceipts = [];
@@ -166,7 +168,7 @@ class _MyListViewState extends State<MyListView> {
 }
 
 class DatabasePage extends StatefulWidget {
-  const DatabasePage({super.key, required this.title});
+  const DatabasePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -179,11 +181,47 @@ class _DatabasePageState extends State<DatabasePage> {
   String _fileName = ''; 
   String _tag = ''; 
   TextEditingController _searchController = TextEditingController();
-  TextEditingController _nameController = TextEditingController(); 
+  TextEditingController _nameController = TextEditingController();
   TextEditingController _tagController = TextEditingController();
 
+  // Method to show upload receipt dialog
+  Future<void> _showUploadReceiptDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Upload Receipt'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                ),
+              ),
+              TextField(
+                controller: _tagController,
+                decoration: InputDecoration(
+                  labelText: 'Tag (optional)',
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close the dialog
+                  await _pickAndUploadFile();
+                },
+                child: Text('Upload'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // Allows user to pick a file to upload
-  void _pickAndUploadFile() async {
+  Future<void> _pickAndUploadFile() async {
     String? filePath = await FilePicker.platform.pickFiles().then((result) {
       if (result != null) {
         return result.files.single.path;
@@ -195,8 +233,6 @@ class _DatabasePageState extends State<DatabasePage> {
     if (filePath != null) {
       setState(() {
         _filePath = filePath;
-        _fileName = _nameController.text; 
-        _tag = _tagController.text;
       });
 
       try {
@@ -244,13 +280,10 @@ class _DatabasePageState extends State<DatabasePage> {
             ),
           ),
           ElevatedButton(
-            onPressed: _pickAndUploadFile,
+            onPressed: _showUploadReceiptDialog,
             child: Text('Upload Receipt'),
           ),
           SizedBox(height: 20),
-          _filePath.isNotEmpty
-              ? Text('File Uploaded Successfully')
-              : Container(),
           Expanded(
             child: MyListView(),
           ),

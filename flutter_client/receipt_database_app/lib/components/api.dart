@@ -113,6 +113,7 @@ class Api {
             'title': receiptId, 
             'imageData': imageData,
             'tags': tags,
+            'id': tempReceiptId,
             'imageUrl': 'placeholder_url', // placeholder
           };
 
@@ -129,5 +130,20 @@ class Api {
     }
   }
 
+  Future<void> deleteReceipt(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:5000/api/receipt/$id'),
+      );
+
+      if (response.statusCode == 204) {
+        print('Receipt deleted successfully');
+      } else {
+        print('Failed to delete receipt. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting receipt: $e');
+    }
+  }
 
 }

@@ -1,6 +1,5 @@
 import json
 import logging
-import botocore.exceptions
 
 from typing import Optional, cast
 
@@ -9,7 +8,6 @@ from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
 from receipt import Receipt, Tag
-from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
 
 from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
@@ -73,7 +71,7 @@ def create_app(file_hook=None, meta_hook=None):
         file = request.files["file"]
         logging.debug(f"Filename: {file.filename}, Stream: {file.stream}")
 
-        if file is None or len(file.stream.read()) == 0:
+        if file is None or len(im_bytes := file.stream.read()) == 0:
             logging.error("UPLOAD ENDPOINT: API client did not send file")
             return error_response(404, "Missing File", "No file has been sent.")
 
@@ -89,8 +87,6 @@ def create_app(file_hook=None, meta_hook=None):
         filename = file.filename
         filename = cast(str, filename)
 
-        # Read all bytes from file and join them into a single list
-        im_bytes = b"".join(file.stream.readlines())
         file.close()
 
         storage_key = file_hook.save(im_bytes, filename)
@@ -156,7 +152,7 @@ def create_app(file_hook=None, meta_hook=None):
         )
 
         if (file := request.files.get("file", None)) is not None:
-            im_bytes = b"".join(file.stream.readlines())
+            im_bytes = file.stream.read()
             file.close()
             file_hook.replace(receipt.storage_key, im_bytes)
 

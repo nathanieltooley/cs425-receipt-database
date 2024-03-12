@@ -69,8 +69,7 @@ def test_upload_receipt(test_client: FlaskClient, mocker):
     assert response_json["tags"][0] == 1
     assert fs_save_patch.call_count == 1
 
-    fs_save_patch.assert_called_once_with(b"", "test.jpg")
-
+    fs_save_patch.assert_called_once_with(b"Test", "test.jpg")
 
 
 def test_upload_receipt_missing_file_key(test_client: FlaskClient):

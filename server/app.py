@@ -1,6 +1,5 @@
 import json
 import logging
-import botocore.exceptions
 
 from typing import Optional, cast
 
@@ -9,7 +8,6 @@ from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
 from receipt import Receipt, Tag
-from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
 
 from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook

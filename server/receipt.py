@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from warnings import warn
 from typing import Sequence
 
 from sqlalchemy import Column, ForeignKey, Table, TypeDecorator, DateTime
@@ -75,6 +76,8 @@ class Receipt(Base):
         return self.id == other.id and self.storage_key == other.storage_key
 
     def export(self) -> dict:
+        if self.name == "":
+            warn(f"Receipt.name is empty for {self.id = }")
         return {
             "id": self.id,
             "name": self.name,

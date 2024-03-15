@@ -142,6 +142,26 @@ def create_app(file_hook=None, meta_hook=None):
         logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
         return file
 
+    @app.route("/api/receipt/<int:id_>", methods=["PUT"])
+    def update_receipt(id_: int):
+        """API Endpoint for updating a receipt"""
+        logging.debug(f"UPDATE ENDPOINT: {request.form}")
+
+        receipt = meta_hook.update_receipt(
+            receipt_id=id_,
+            name=request.form.get("name", None),
+            set_tags=request.form.getlist("tag", type=int) or None,
+            add_tags=request.form.getlist("add tag", type=int),
+            remove_tags=request.form.getlist("remove tag", type=int),
+        )
+
+        if (file := request.files.get("file", None)) is not None:
+            im_bytes = b"".join(file.stream.readlines())
+            file.close()
+            file_hook.replace(receipt.storage_key, im_bytes)
+
+        return receipt.export()
+
     @app.route("/api/receipt/<int:id>/")
     def fetch_receipt(id: int):
         """API Endpoint for viewing receipt metadata
@@ -227,6 +247,21 @@ def create_app(file_hook=None, meta_hook=None):
         logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
 
         return response
+
+    @app.route("/api/tag/<int:tag_id>/", methods=["PUT"])
+    def update_tag(tag_id: int):
+        """Updates a tag
+
+        Args:
+            tag_id: The id of the tag to update
+        """
+        if (tag := meta_hook.fetch_tag(tag_id)) is None:
+            return response_code(404)
+
+        if "name" in request.form:
+            tag.name = request.form.get("name")
+
+        return meta_hook.update_tag(tag).export()
 
     @app.route("/api/tag/<int:tag_id>", methods=["DELETE"])
     def delete_tag(tag_id: int):

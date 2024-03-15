@@ -64,7 +64,7 @@ class InitialPage extends StatelessWidget {
             OAuthButton(
               hintText: 'Continue with Google',
               imageUsed: Image.asset('lib/images/googleLogo.png'),
-               myPage: DatabasePage(title: "title"),
+               myPage: DatabasePage(title: "Receipt Database"),
             ),
 
             const SizedBox(height: 10.0),
@@ -72,7 +72,7 @@ class InitialPage extends StatelessWidget {
             OAuthButton(
               hintText: 'Continue with Apple',
               imageUsed: Image.asset('lib/images/appleLogo.png'), 
-              myPage: DatabasePage(title: "title"),
+              myPage: DatabasePage(title: "Receipt Database"),
             ),
 
             const SizedBox(

@@ -3,6 +3,7 @@ import warnings
 import boto3
 import botocore.exceptions
 
+from configure import CONFIG
 from storage_hooks.storage_hooks import FileHook
 
 
@@ -11,9 +12,14 @@ class AWSS3Hook(FileHook):
 
     def __init__(self):
         super().__init__()
-        self.client = boto3.client("s3")
-        # ToDo: Configurable Bucket Name
-        self.bucket_name = "cs425-3-test-bucket"
+        self.config = CONFIG.AWSS3
+
+        self.client = boto3.client(
+            "s3",
+            aws_access_key_id=self.config.access_key_id,  # Key as str or None
+            aws_secret_access_key=self.config.secret_access_key,  # Ditto
+        )
+        self.bucket_name = self.config.bucket_name
 
     def save(self, image: bytes, original_name: str) -> str:
         key = self._make_key(original_name)

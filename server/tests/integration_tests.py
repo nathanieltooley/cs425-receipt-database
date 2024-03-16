@@ -103,3 +103,49 @@ def test_upload_receipt(
     assert j["storage_key"] is not None
 
     assert test_data == file_hook.fetch(j["storage_key"])
+
+
+def test_view_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_update_receipt(
+    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    pass
+
+
+def test_fetch_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_fetch_receipt_keys(
+    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    pass
+
+
+def test_delete_receipt(
+    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    pass
+
+
+def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_fetch_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_fetch_tags(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_update_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass
+
+
+def test_delete_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+    pass

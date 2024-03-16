@@ -10,10 +10,10 @@ from receipt import Tag
 import pytest
 import io
 
-from test_hooks import sqlite3, file_system, aws_s3
+from temp_hooks import sqlite3, MemorySQLite3, file_system, aws_s3
 
 
-@pytest.fixture(params=[sqlite3])
+@pytest.fixture(params=[MemorySQLite3, sqlite3])
 def db_hook(request):
     hook: DatabaseHook = request.param()
     hook.initialize_storage()

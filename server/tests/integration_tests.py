@@ -17,14 +17,14 @@ from temp_hooks import sqlite3, MemorySQLite3, file_system, aws_s3
 def db_hook(request):
     hook: DatabaseHook = request.param()
     hook.initialize_storage()
-    return hook
+    yield hook
 
 
 @pytest.fixture(params=[file_system, aws_s3])
 def file_hook(request):
     hook: FileHook = request.param()
     hook.initialize_storage(True)
-    return hook
+    yield hook
 
 
 @pytest.fixture()
@@ -98,11 +98,25 @@ def test_upload_receipt(
 
     j = cast(Any, response.json)
 
+    storage_key = j["storage_key"]
+    _id = int(j["id"])
+
     assert j["name"] == "test"
     assert len(j["tags"]) == 3
-    assert j["storage_key"] is not None
+    assert storage_key is not None
+    assert _id is not None
 
-    assert test_data == file_hook.fetch(j["storage_key"])
+    db_data = db_hook.fetch_receipt(_id)
+
+    assert db_data is not None
+    assert db_data.name == "test"
+    assert len(db_data.tags) == 3
+
+    assert test_data == file_hook.fetch(storage_key)
+
+    # FIX: This returns an OperationalError: syntax error around "RETURNING"
+    db_hook.delete_receipt(_id)
+    file_hook.delete(storage_key)
 
 
 def test_view_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):

@@ -92,7 +92,7 @@ def create_app(file_hook=None, meta_hook=None):
         storage_key = file_hook.save(im_bytes, filename)
 
         receipt = Receipt()
-        receipt.name = request.form.get("name", None)
+        receipt.name = request.form.get("name", None) or None
         receipt.storage_key = storage_key
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
@@ -145,7 +145,7 @@ def create_app(file_hook=None, meta_hook=None):
 
         receipt = meta_hook.update_receipt(
             receipt_id=id_,
-            name=request.form.get("name", None),
+            name=request.form.get("name", None) or None,
             set_tags=request.form.getlist("tag", type=int) or None,
             add_tags=request.form.getlist("add tag", type=int),
             remove_tags=request.form.getlist("remove tag", type=int),

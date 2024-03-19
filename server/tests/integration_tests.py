@@ -5,7 +5,7 @@ from flask.testing import FlaskClient
 from flask import Flask
 from storage_hooks.storage_hooks import DatabaseHook, FileHook, StorageHook
 from werkzeug.datastructures import MultiDict
-from receipt import Tag
+from receipt import Tag, Receipt
 
 import pytest
 import io
@@ -45,6 +45,28 @@ def app(db_hook, file_hook):
 @pytest.fixture()
 def client(app: Flask):
     return app.test_client()
+
+
+@pytest.fixture()
+def receipt_tag_db(tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook):
+    r_image = None
+
+    with open("./tests/test_image1.png", "rb") as file:
+        r_image = file.read()
+
+    receipt = Receipt()
+    receipt.name = "Test"
+    receipt.tags = tags_db
+
+    storage_key = file_hook.save(r_image, receipt.name)
+
+    receipt.storage_key = storage_key
+
+    receipt = db_hook.create_receipt(receipt)
+
+    yield receipt
+
+    db_hook.delete_receipt(receipt.id)
 
 
 @pytest.fixture()
@@ -136,8 +158,18 @@ def test_upload_receipt(
     file_hook.delete(storage_key)
 
 
-def test_view_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_view_receipt(
+    receipt_tag_db: Receipt,
+    db_hook: DatabaseHook,
+    file_hook: FileHook,
+    client: FlaskClient,
+):
+    response = client.get(f"/api/receipt/{receipt_tag_db.id}/image")
+
+    print(response)
+
+    assert response.get_data(False) == file_hook.fetch(receipt_tag_db.storage_key)
+    assert response.headers["Upload-Date"] == str(receipt_tag_db.upload_dt)
 
 
 def test_update_receipt(

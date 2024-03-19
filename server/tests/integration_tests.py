@@ -161,7 +161,6 @@ def test_upload_receipt(
 
 def test_view_receipt(
     receipt_tag_db: Receipt,
-    db_hook: DatabaseHook,
     file_hook: FileHook,
     client: FlaskClient,
 ):
@@ -176,13 +175,8 @@ def test_view_receipt(
 # TODO: Test updating the receipt image data through update_receipt()
 def test_update_receipt(
     receipt_tag_db: Receipt,
-    db_hook: DatabaseHook,
-    file_hook: FileHook,
     client: FlaskClient,
 ):
-    o_name = receipt_tag_db.name
-    o_tags = receipt_tag_db.tags
-
     tag_id = 3
 
     form = MultiDict()
@@ -219,8 +213,6 @@ def test_update_receipt(
 
 def test_fetch_receipt(
     receipt_tag_db: Receipt,
-    db_hook: DatabaseHook,
-    file_hook: FileHook,
     client: FlaskClient,
 ):
     response = client.get(f"/api/receipt/{receipt_tag_db.id}/")
@@ -275,7 +267,6 @@ def test_fetch_receipt_keys(
 def test_delete_receipt(
     receipt_tag_db: Receipt,
     db_hook: DatabaseHook,
-    file_hook: FileHook,
     client: FlaskClient,
 ):
     id = receipt_tag_db.id
@@ -285,7 +276,16 @@ def test_delete_receipt(
     assert db_hook.fetch_receipt(id) is None
 
 
-def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
+def test_delete_receipt_none(
+    receipt_tag_db: Receipt,
+    client: FlaskClient,
+):
+    response = client.delete("/api/receipt/100")
+
+    assert response.status_code == 404
+
+
+def test_upload_tag(db_hook: DatabaseHook, client: FlaskClient):
     tag_name = "test_tag"
     response = client.post(
         "/api/tag/", data={"name": tag_name}, content_type="multipart/form-data"
@@ -299,9 +299,7 @@ def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskCli
     assert tag_name == tag.name
 
 
-def test_fetch_tag(
-    tag_db: Tag, db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
-):
+def test_fetch_tag(tag_db: Tag, client: FlaskClient):
     response = client.get(f"/api/tag/{tag_db.id}")
 
     j = cast(Any, response.json)
@@ -309,9 +307,7 @@ def test_fetch_tag(
     assert j["id"] == tag_db.id
 
 
-def test_fetch_tags(
-    tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
-):
+def test_fetch_tags(tags_db: List[Tag], client: FlaskClient):
     response = client.get("/api/tag/")
 
     j = cast(Any, response.json)
@@ -326,9 +322,7 @@ def test_fetch_tags(
     assert j[2]["id"] == 3
 
 
-def test_update_tag(
-    tag_db: Tag, db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
-):
+def test_update_tag(tag_db: Tag, client: FlaskClient):
     response = client.put(
         f"/api/tag/{tag_db.id}/",
         data={"name": "new_name"},
@@ -341,9 +335,7 @@ def test_update_tag(
     assert j["name"] == "new_name"
 
 
-def test_delete_tag(
-    tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
-):
+def test_delete_tag(tags_db: List[Tag], db_hook: DatabaseHook, client: FlaskClient):
     response = client.delete("/api/tag/3")
 
     assert response.status_code == 204

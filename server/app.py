@@ -229,7 +229,7 @@ def create_app(file_hook=None, meta_hook=None):
             return error_response(404, "Missing Name", "Tag Name not specified")
 
         tag = Tag(name=tag_name)
-        return str(meta_hook.create_tag(tag))
+        return str(meta_hook.create_tag(tag).id)
 
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):

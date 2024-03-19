@@ -1,4 +1,5 @@
 from os import walk
+from pprint import pprint
 from typing import List, cast, Any
 from boto3 import logging
 from flask.testing import FlaskClient
@@ -215,8 +216,15 @@ def test_update_receipt(
     assert j["tags"] == [1, 2, 3]
 
 
-def test_fetch_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_fetch_receipt(
+    receipt_tag_db: Receipt,
+    db_hook: DatabaseHook,
+    file_hook: FileHook,
+    client: FlaskClient,
+):
+    response = client.get(f"/api/receipt/{receipt_tag_db.id}/")
+
+    assert response.json == receipt_tag_db.export()
 
 
 def test_fetch_receipt_keys(

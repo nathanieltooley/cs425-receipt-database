@@ -183,7 +183,7 @@ def create_app(file_hook=None, meta_hook=None):
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
         # TODO: Maybe allow the user to customize how they want the response to be sorted
-        sorted(response, key=lambda receipt: receipt["name"])
+        response = sorted(response, key=lambda receipt: receipt["name"])
 
         return response
 

@@ -273,9 +273,16 @@ def test_fetch_receipt_keys(
 
 
 def test_delete_receipt(
-    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+    receipt_tag_db: Receipt,
+    db_hook: DatabaseHook,
+    file_hook: FileHook,
+    client: FlaskClient,
 ):
-    pass
+    id = receipt_tag_db.id
+    response = client.delete(f"/api/receipt/{receipt_tag_db.id}")
+
+    assert response.status_code == 204
+    assert db_hook.fetch_receipt(id) is None
 
 
 def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):

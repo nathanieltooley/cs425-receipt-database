@@ -48,7 +48,13 @@ def client(app: Flask):
 
 
 @pytest.fixture()
-def test_tag(db_hook: DatabaseHook):
+def tag():
+    tag = Tag(name="1")
+    return tag
+
+
+@pytest.fixture()
+def tag_db(db_hook: DatabaseHook):
     tag = Tag(name="1")
     db_hook.create_tag(tag)
 
@@ -58,7 +64,18 @@ def test_tag(db_hook: DatabaseHook):
 
 
 @pytest.fixture()
-def test_tags(db_hook: DatabaseHook):
+def tags():
+    num_tags = 3
+    tags = []
+    for i in range(0, num_tags):
+        tag = Tag(name=f"{i}")
+        tags.append(tag)
+
+    return tags
+
+
+@pytest.fixture()
+def tags_db(db_hook: DatabaseHook):
     num_tags = 3
     tags = []
     for i in range(0, num_tags):
@@ -75,7 +92,7 @@ def test_upload_receipt(
     db_hook: DatabaseHook,
     file_hook: FileHook,
     client: FlaskClient,
-    test_tags: List["Tag"],
+    tags_db: List["Tag"],
 ):
     test_data = None
 
@@ -86,7 +103,7 @@ def test_upload_receipt(
     form_data.add("file", (io.BytesIO(test_data), "test_image1.png"))
     form_data.add("name", "test")
 
-    for t in test_tags:
+    for t in tags_db:
         form_data.add("tag", t.id)
 
     response = client.post(
@@ -115,7 +132,6 @@ def test_upload_receipt(
 
     assert test_data == file_hook.fetch(storage_key)
 
-    # FIX: This returns an OperationalError: syntax error around "RETURNING"
     db_hook.delete_receipt(_id)
     file_hook.delete(storage_key)
 

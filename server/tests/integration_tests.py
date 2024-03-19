@@ -293,7 +293,10 @@ def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskCli
 
     tag_id = int(response.data)
 
-    assert tag_name == db_hook.fetch_tag(tag_id).name
+    tag = db_hook.fetch_tag(tag_id)
+
+    assert tag is not None
+    assert tag_name == tag.name
 
 
 def test_fetch_tag(

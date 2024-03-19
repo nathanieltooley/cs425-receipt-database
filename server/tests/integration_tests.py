@@ -173,9 +173,46 @@ def test_view_receipt(
 
 
 def test_update_receipt(
-    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+    receipt_tag_db: Receipt,
+    db_hook: DatabaseHook,
+    file_hook: FileHook,
+    client: FlaskClient,
 ):
-    pass
+    o_name = receipt_tag_db.name
+    o_tags = receipt_tag_db.tags
+
+    tag_id = 3
+
+    form = MultiDict()
+    form.add("name", "new")
+    form.add("remove tag", tag_id)
+
+    response = client.put(
+        f"/api/receipt/{receipt_tag_db.id}",
+        data=form,
+        content_type="multipart/form-data",
+    )
+
+    j = cast(Any, response.json)
+
+    assert j["name"] == "new"
+    assert len(j["tags"]) == 2
+    assert j["tags"] == [1, 2]
+
+    form = MultiDict()
+    form.add("add tag", tag_id)
+
+    response = client.put(
+        f"/api/receipt/{receipt_tag_db.id}",
+        data=form,
+        content_type="multipart/form-data",
+    )
+
+    j = cast(Any, response.json)
+
+    assert j["name"] == "new"
+    assert len(j["tags"]) == 3
+    assert j["tags"] == [1, 2, 3]
 
 
 def test_fetch_receipt(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):

@@ -78,7 +78,7 @@ def tag():
 
 @pytest.fixture()
 def tag_db(db_hook: DatabaseHook):
-    tag = Tag(name="1")
+    tag = Tag(name="test_tag_1")
     db_hook.create_tag(tag)
 
     yield tag
@@ -296,8 +296,14 @@ def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskCli
     assert tag_name == db_hook.fetch_tag(tag_id).name
 
 
-def test_fetch_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_fetch_tag(
+    tag_db: Tag, db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    response = client.get(f"/api/tag/{tag_db.id}")
+
+    j = cast(Any, response.json)
+    assert j["name"] == tag_db.name
+    assert j["id"] == tag_db.id
 
 
 def test_fetch_tags(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):

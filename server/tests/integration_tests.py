@@ -91,7 +91,7 @@ def tags():
     num_tags = 3
     tags = []
     for i in range(0, num_tags):
-        tag = Tag(name=f"{i}")
+        tag = Tag(name=f"Test{i}")
         tags.append(tag)
 
     return tags
@@ -102,7 +102,7 @@ def tags_db(db_hook: DatabaseHook):
     num_tags = 3
     tags = []
     for i in range(0, num_tags):
-        tag = Tag(name=f"{i}")
+        tag = Tag(name=f"Test{i}")
         tags.append(tag)
         db_hook.create_tag(tag)
 
@@ -309,13 +309,44 @@ def test_fetch_tag(
     assert j["id"] == tag_db.id
 
 
-def test_fetch_tags(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_fetch_tags(
+    tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    response = client.get("/api/tag/")
+
+    j = cast(Any, response.json)
+    j = sorted(j, key=lambda x: x["name"])
+
+    assert len(j) == 3
+    assert j[0]["name"] == "Test0"
+    assert j[0]["id"] == 1
+    assert j[1]["name"] == "Test1"
+    assert j[1]["id"] == 2
+    assert j[2]["name"] == "Test2"
+    assert j[2]["id"] == 3
 
 
-def test_update_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_update_tag(
+    tag_db: Tag, db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    response = client.put(
+        f"/api/tag/{tag_db.id}/",
+        data={"name": "new_name"},
+        content_type="multipart/form-data",
+    )
+
+    j = cast(Any, response.json)
+
+    assert j["id"] == tag_db.id
+    assert j["name"] == "new_name"
 
 
-def test_delete_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+def test_delete_tag(
+    tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+):
+    response = client.delete("/api/tag/3")
+
+    assert response.status_code == 204
+    assert db_hook.fetch_tag(1) is not None
+    assert db_hook.fetch_tag(2) is not None
+    assert db_hook.fetch_tag(3) is None

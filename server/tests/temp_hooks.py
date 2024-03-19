@@ -14,7 +14,8 @@ class MemorySQLite3(DatabaseHook):
 
     def __init__(self):
         super().__init__()
-        self.engine = create_engine(f"sqlite://")
+        self.engine = create_engine("sqlite://")
+        self.engine.echo = True
 
 
 def sqlite3() -> SQLite3:

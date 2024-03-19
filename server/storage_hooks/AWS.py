@@ -1,6 +1,7 @@
 import warnings
 
 import boto3
+from botocore import logging
 import botocore.exceptions
 
 from configure import CONFIG
@@ -84,10 +85,15 @@ class AWSS3Hook(FileHook):
     def _delete_all(self):
         """Deletes all objects from the bucket"""
         objects = self.client.list_objects_v2(Bucket=self.bucket_name)
-        formatted = [{"Key": obj["Key"]} for obj in objects["Contents"]]
-        self.client.delete_objects(
-            Bucket=self.bucket_name, Delete={"Objects": formatted}
-        )
+
+        try:
+            if objects["Contents"] is not None:
+                formatted = [{"Key": obj["Key"]} for obj in objects["Contents"]]
+                self.client.delete_objects(
+                    Bucket=self.bucket_name, Delete={"Objects": formatted}
+                )
+        except KeyError:
+            logging.warning("AWS Storage Hook attempted to delete an empty bucket")
 
     def initialize_storage(self, clean: bool = False):
         """Initialize storage / database with current scheme."""

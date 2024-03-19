@@ -182,6 +182,9 @@ def create_app(file_hook=None, meta_hook=None):
         logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
+        # TODO: Maybe allow the user to customize how they want the response to be sorted
+        response = sorted(response, key=lambda receipt: receipt["name"])
+
         return response
 
     @app.route("/api/receipt/<int:id>", methods=["DELETE"])
@@ -191,7 +194,18 @@ def create_app(file_hook=None, meta_hook=None):
         Args:
             id: The id of the receipt to delete
         """
-        storage_key = meta_hook.delete_receipt(id)
+        r = meta_hook.fetch_receipt(id)
+
+        if r is None:
+            logging.info(
+                f"Client attempted to delete receipt -- {id} -- that doesn't exists"
+            )
+            return error_response(
+                404, "Missing Key Error", f"The key, {id} was not found in the database"
+            )
+
+        storage_key = r.storage_key
+        meta_hook.delete_receipt(id)
         file_hook.delete(storage_key)
 
         logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
@@ -215,7 +229,7 @@ def create_app(file_hook=None, meta_hook=None):
             return error_response(404, "Missing Name", "Tag Name not specified")
 
         tag = Tag(name=tag_name)
-        return str(meta_hook.create_tag(tag))
+        return str(meta_hook.create_tag(tag).id)
 
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):

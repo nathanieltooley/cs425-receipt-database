@@ -99,7 +99,7 @@ class TestDatabaseHook:
                 assert tag in f_tags
 
     def test_delete_receipt(self, hook, receipt):
-        assert hook.delete_receipt(receipt.id) == receipt.storage_key
+        hook.delete_receipt(receipt.id)
         assert hook.fetch_receipt(receipt.id) is None
 
     def test_fetch_tag(self, hook, tag):

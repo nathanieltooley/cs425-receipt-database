@@ -286,7 +286,14 @@ def test_delete_receipt(
 
 
 def test_upload_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):
-    pass
+    tag_name = "test_tag"
+    response = client.post(
+        "/api/tag/", data={"name": tag_name}, content_type="multipart/form-data"
+    )
+
+    tag_id = int(response.data)
+
+    assert tag_name == db_hook.fetch_tag(tag_id).name
 
 
 def test_fetch_tag(db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient):

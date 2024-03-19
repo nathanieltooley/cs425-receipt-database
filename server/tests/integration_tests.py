@@ -111,6 +111,7 @@ def test_upload_receipt(
     assert db_data is not None
     assert db_data.name == "test"
     assert len(db_data.tags) == 3
+    assert db_data.storage_key == storage_key
 
     assert test_data == file_hook.fetch(storage_key)
 

@@ -194,7 +194,18 @@ def create_app(file_hook=None, meta_hook=None):
         Args:
             id: The id of the receipt to delete
         """
-        storage_key = meta_hook.delete_receipt(id)
+        r = meta_hook.fetch_receipt(id)
+
+        if r is None:
+            logging.info(
+                f"Client attempted to delete receipt -- {id} -- that doesn't exists"
+            )
+            return error_response(
+                404, "Missing Key Error", f"The key, {id} was not found in the database"
+            )
+
+        storage_key = r.storage_key
+        meta_hook.delete_receipt(id)
         file_hook.delete(storage_key)
 
         logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")

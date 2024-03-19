@@ -182,6 +182,9 @@ def create_app(file_hook=None, meta_hook=None):
         logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
+        # TODO: Maybe allow the user to customize how they want the response to be sorted
+        sorted(response, key=lambda receipt: receipt["name"])
+
         return response
 
     @app.route("/api/receipt/<int:id>", methods=["DELETE"])

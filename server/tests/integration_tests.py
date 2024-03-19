@@ -173,6 +173,7 @@ def test_view_receipt(
     assert response.headers["Upload-Date"] == str(receipt_tag_db.upload_dt)
 
 
+# TODO: Test updating the receipt image data through update_receipt()
 def test_update_receipt(
     receipt_tag_db: Receipt,
     db_hook: DatabaseHook,
@@ -228,9 +229,47 @@ def test_fetch_receipt(
 
 
 def test_fetch_receipt_keys(
-    db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
+    tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
 ):
-    pass
+    test_image_data = None
+    with open("./tests/test_image1.png", "rb") as f:
+        test_image_data = f.read()
+
+    receipt1 = Receipt()
+    receipt1.name = "Test1"
+    receipt1.tags = tags_db
+    receipt1.storage_key = file_hook.save(test_image_data, receipt1.name)
+    receipt1 = db_hook.create_receipt(receipt1)
+
+    receipt2 = Receipt()
+    receipt2.name = "Test2"
+    receipt2.tags = tags_db
+    receipt2.storage_key = file_hook.save(test_image_data, receipt2.name)
+    receipt2 = db_hook.create_receipt(receipt2)
+
+    receipt3 = Receipt()
+    receipt3.name = "Test3"
+    receipt3.tags = tags_db
+    receipt3.storage_key = file_hook.save(test_image_data, receipt3.name)
+    receipt3 = db_hook.create_receipt(receipt3)
+
+    response = client.get("/api/receipt/")
+
+    j = cast(Any, response.json)
+    tag_ids = [1, 2, 3]
+
+    assert j is not None
+
+    assert len(j) == 3
+    assert j[0]["name"] == "Test1"
+    assert j[0]["tags"] == tag_ids
+    assert j[0]["storage_key"] == receipt1.storage_key
+    assert j[1]["name"] == "Test2"
+    assert j[1]["tags"] == tag_ids
+    assert j[1]["storage_key"] == receipt2.storage_key
+    assert j[2]["name"] == "Test3"
+    assert j[2]["tags"] == tag_ids
+    assert j[2]["storage_key"] == receipt3.storage_key
 
 
 def test_delete_receipt(

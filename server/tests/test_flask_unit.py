@@ -1,11 +1,10 @@
 import io
 from typing import Any, cast
-from flask import Flask, json
+from flask import Flask
 from flask.testing import FlaskClient
 
 import pytest
 from pytest_mock import MockerFixture
-import modulefinder
 import sys
 import pathlib
 
@@ -13,15 +12,14 @@ from receipt import Receipt, Tag
 
 file_path = pathlib.Path(__file__).absolute()
 sys.path.append(str(file_path.parent.parent))
-from storage_hooks.SQLite3 import SQLite3
-from tests.temp_hooks import MemorySQLite3, FileSystemHook
+from tests.temp_hooks import MemorySQLite3, file_system
 
 
 @pytest.fixture()
 def app():
     from app import create_app
 
-    app = create_app(FileSystemHook(), MemorySQLite3())
+    app = create_app(file_system(), MemorySQLite3())
 
     app.config.update(
         {
@@ -69,8 +67,7 @@ def test_upload_receipt(test_client: FlaskClient, mocker):
     assert response_json["tags"][0] == 1
     assert fs_save_patch.call_count == 1
 
-    fs_save_patch.assert_called_once_with(b"", "test.jpg")
-
+    fs_save_patch.assert_called_once_with(b"Test", "test.jpg")
 
 
 def test_upload_receipt_missing_file_key(test_client: FlaskClient):
@@ -238,9 +235,9 @@ def test_fetch_receipt_missing_key(test_client: FlaskClient, mocker):
 
 def test_fetch_many_keys(test_client: FlaskClient, mocker):
     test_receipts = [
-        Receipt(id=1),
-        Receipt(id=2),
-        Receipt(id=3),
+        Receipt(id=1, name="Test1"),
+        Receipt(id=2, name="Test2"),
+        Receipt(id=3, name="Test3"),
     ]
 
     fetch_receipts_mock = mocker.patch(
@@ -256,6 +253,10 @@ def test_fetch_many_keys(test_client: FlaskClient, mocker):
 
 
 def test_delete_receipt(test_client: FlaskClient, mocker):
+    mocker.patch(
+        "storage_hooks.storage_hooks.DatabaseHook.fetch_receipt",
+        return_value=Receipt(storage_key="1"),
+    )
     mocker.patch(
         "storage_hooks.storage_hooks.DatabaseHook.delete_receipt",
     )

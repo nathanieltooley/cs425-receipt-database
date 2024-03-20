@@ -1,6 +1,5 @@
 import json
 import logging
-import botocore.exceptions
 
 from typing import Optional, cast
 
@@ -9,7 +8,6 @@ from flask_cors import CORS
 from flask import Flask, Response, request, send_file
 from configure import CONFIG
 from receipt import Receipt, Tag
-from storage_hooks.AWS import AWSS3Hook
 from io import BytesIO
 
 from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
@@ -73,7 +71,7 @@ def create_app(file_hook=None, meta_hook=None):
         file = request.files["file"]
         logging.debug(f"Filename: {file.filename}, Stream: {file.stream}")
 
-        if file is None or len(file.stream.read()) == 0:
+        if file is None or len(im_bytes := file.stream.read()) == 0:
             logging.error("UPLOAD ENDPOINT: API client did not send file")
             return error_response(404, "Missing File", "No file has been sent.")
 
@@ -89,14 +87,12 @@ def create_app(file_hook=None, meta_hook=None):
         filename = file.filename
         filename = cast(str, filename)
 
-        # Read all bytes from file and join them into a single list
-        im_bytes = b"".join(file.stream.readlines())
         file.close()
 
         storage_key = file_hook.save(im_bytes, filename)
 
         receipt = Receipt()
-        receipt.name = request.form.get("name", None)
+        receipt.name = request.form.get("name", None) or None
         receipt.storage_key = storage_key
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
@@ -149,14 +145,14 @@ def create_app(file_hook=None, meta_hook=None):
 
         receipt = meta_hook.update_receipt(
             receipt_id=id_,
-            name=request.form.get("name", None),
+            name=request.form.get("name", None) or None,
             set_tags=request.form.getlist("tag", type=int) or None,
             add_tags=request.form.getlist("add tag", type=int),
             remove_tags=request.form.getlist("remove tag", type=int),
         )
 
         if (file := request.files.get("file", None)) is not None:
-            im_bytes = b"".join(file.stream.readlines())
+            im_bytes = file.stream.read()
             file.close()
             file_hook.replace(receipt.storage_key, im_bytes)
 
@@ -186,6 +182,9 @@ def create_app(file_hook=None, meta_hook=None):
         logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
+        # TODO: Maybe allow the user to customize how they want the response to be sorted
+        response = sorted(response, key=lambda receipt: receipt["name"])
+
         return response
 
     @app.route("/api/receipt/<int:id>", methods=["DELETE"])
@@ -195,7 +194,18 @@ def create_app(file_hook=None, meta_hook=None):
         Args:
             id: The id of the receipt to delete
         """
-        storage_key = meta_hook.delete_receipt(id)
+        r = meta_hook.fetch_receipt(id)
+
+        if r is None:
+            logging.info(
+                f"Client attempted to delete receipt -- {id} -- that doesn't exists"
+            )
+            return error_response(
+                404, "Missing Key Error", f"The key, {id} was not found in the database"
+            )
+
+        storage_key = r.storage_key
+        meta_hook.delete_receipt(id)
         file_hook.delete(storage_key)
 
         logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
@@ -219,7 +229,7 @@ def create_app(file_hook=None, meta_hook=None):
             return error_response(404, "Missing Name", "Tag Name not specified")
 
         tag = Tag(name=tag_name)
-        return str(meta_hook.create_tag(tag))
+        return str(meta_hook.create_tag(tag).id)
 
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):

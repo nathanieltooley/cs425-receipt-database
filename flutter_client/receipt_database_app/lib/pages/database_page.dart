@@ -75,27 +75,20 @@ class _MyListViewState extends State<MyListView> {
     });
   }
 
-Future<Uint8List?> generateThumbnail(Uint8List? imageData) async {
-  try {
-    if (imageData == null || imageData.isEmpty) {
-      print('Image data is empty or null.');
+  Future<Uint8List?> generateThumbnail(Uint8List imageData) async {
+    try {
+      img.Image? image = img.decodeImage(imageData);
+      if (image == null) {
+        print('Error decoding image.'); // Handle decoding error
+        return null;
+      }
+      img.Image thumbnail = img.copyResize(image, width: 100, height: 100);
+      return Uint8List.fromList(img.encodePng(thumbnail));
+    } catch (e) {
+      print('Error generating thumbnail: $e'); // Handle thumbnail generation error
       return null;
     }
-
-    img.Image? image = img.decodeImage(imageData);
-    if (image == null) {
-      print('Error decoding image.');
-      return null;
-    }
-
-    img.Image thumbnail = img.copyResize(image, width: 100, height: 100);
-    return Uint8List.fromList(img.encodePng(thumbnail));
-  } catch (e) {
-    print('Error generating thumbnail: $e');
-    return null;
   }
-}
-
 
   Future<void> _confirmAndDeleteReceipt(int id) async {
     // Show confirmation dialog before deleting the receipt
@@ -228,6 +221,45 @@ class _DatabasePageState extends State<DatabasePage> {
   TextEditingController _searchController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
   TextEditingController _tagController = TextEditingController();
+  final TextEditingController _addTagController = TextEditingController();
+
+  Future<void> _addTag(String tagName) async {
+    // Replace this with your API call to add the tag
+    print('Adding tag: $tagName');
+    await Api.createTag(tagName);
+    // await api.createTag(tagName);
+  }
+
+  void _showAddTagDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add Tag'),
+          content: TextField(
+            controller: _tagController, // Reuse the existing controller
+            decoration: InputDecoration(labelText: 'Tag Name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final tagName = _tagController.text;
+                await _addTag(tagName);
+                Navigator.of(context).pop();
+              },
+              child: Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   // Method to show upload receipt dialog
   Future<void> _showUploadReceiptDialog() async {
@@ -305,6 +337,12 @@ class _DatabasePageState extends State<DatabasePage> {
             onPressed: () {
               // Add settings functionality here
               print('Settings button pressed');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              _showAddTagDialog(context);
             },
           ),
         ],

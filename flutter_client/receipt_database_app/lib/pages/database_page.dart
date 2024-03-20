@@ -75,20 +75,27 @@ class _MyListViewState extends State<MyListView> {
     });
   }
 
-  Future<Uint8List?> generateThumbnail(Uint8List imageData) async {
-    try {
-      img.Image? image = img.decodeImage(imageData);
-      if (image == null) {
-        print('Error decoding image.'); // Handle decoding error
-        return null;
-      }
-      img.Image thumbnail = img.copyResize(image, width: 100, height: 100);
-      return Uint8List.fromList(img.encodePng(thumbnail));
-    } catch (e) {
-      print('Error generating thumbnail: $e'); // Handle thumbnail generation error
+Future<Uint8List?> generateThumbnail(Uint8List? imageData) async {
+  try {
+    if (imageData == null || imageData.isEmpty) {
+      print('Image data is empty or null.');
       return null;
     }
+
+    img.Image? image = img.decodeImage(imageData);
+    if (image == null) {
+      print('Error decoding image.');
+      return null;
+    }
+
+    img.Image thumbnail = img.copyResize(image, width: 100, height: 100);
+    return Uint8List.fromList(img.encodePng(thumbnail));
+  } catch (e) {
+    print('Error generating thumbnail: $e');
+    return null;
   }
+}
+
 
   Future<void> _confirmAndDeleteReceipt(int id) async {
     // Show confirmation dialog before deleting the receipt
@@ -269,6 +276,8 @@ class _DatabasePageState extends State<DatabasePage> {
     });
 
     if (filePath != null) {
+      _fileName = _nameController.text;
+      _tag = _tagController.text;
       setState(() {
         _filePath = filePath;
       });

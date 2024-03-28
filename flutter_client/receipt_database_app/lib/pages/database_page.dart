@@ -5,6 +5,7 @@ import '/pages/image_cache.dart' as MyImageCache; // Updated import statement
 import '/pages/view_receipt.dart';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 class MyListView extends StatefulWidget {
   const MyListView({super.key});
@@ -288,7 +289,14 @@ class _DatabasePageState extends State<DatabasePage> {
                   Navigator.of(context).pop(); // Close the dialog
                   await _pickAndUploadFile();
                 },
-                child: Text('Upload'),
+                child: Text('Upload from Files'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close the dialog
+                  await _pickAndUploadFromCamera();
+                },
+                child: Text('Upload from Camera'),
               ),
             ],
           ),
@@ -296,6 +304,26 @@ class _DatabasePageState extends State<DatabasePage> {
       },
     );
   }
+
+  Future<void> _pickAndUploadFromCamera() async {
+    final imagePicker = ImagePicker();
+    final XFile? pickedFile = await imagePicker.pickImage(source: ImageSource.camera);
+    
+    if (pickedFile != null) {
+      _fileName = _nameController.text;
+      _tag = _tagController.text;
+
+      try {
+        await Api.uploadFile(pickedFile.path, _fileName, _tag);
+        print('File uploaded successfully');
+      } catch (e) {
+        print('Error uploading file: $e');
+      }
+    } else {
+      print('No image captured');
+    }
+  }
+
 
   // Allows user to pick a file to upload
   Future<void> _pickAndUploadFile() async {

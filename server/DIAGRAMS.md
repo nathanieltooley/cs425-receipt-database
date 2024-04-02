@@ -31,95 +31,95 @@ erDiagram
 ```mermaid
 classDiagram
     class Tag{
-      +int id
-      +str name
-      +dict export()
+      id : int
+      name : str
+      export() dict
     }
     class Receipt{
-      +int id
-      +str name
-      +str storage_key
-      +datetime upload_dt
-      +list[Tag] tags
-      +dict export()
+      id : int
+      name : name
+      storage_key : str
+      upload_dt : datetime
+      tags : list[Tag]
+      export() dict
     }
     
     class DatabaseHook {
-        Engine engine
+        engine : sqlalchemy.Engine
         save_objects()
         delete_objects()
-        create_receipt()
-        fetch_recipt()
-        fetch_receipts()
-        update_receipt()
-        delete_receipt()
-        create_tag()
-        fetch_tag()
-        fetch_tags()
-        update_tag()
-        delete_tag()
+        create_receipt() Receipt
+        fetch_recipt() Receipt
+        fetch_receipts() list[Receipt]
+        update_receipt() Receipt
+        delete_receipt() int
+        create_tag() Tag
+        fetch_tag() Tag
+        fetch_tags() list[Tag]
+        update_tag() Tag
+        delete_tag() int
         initialize_storage()
     }
     
     class MetaHook {
-        _make_key()
-        save()
-        replace()
-        fetch()
-        delete()
-        initialize_storage()
+        _make_key() str$
+        save() str*
+        replace()*
+        fetch() bytes*
+        delete()*
+        initialize_storage()*
     }
     
     class SQLite3 {
-        config
+        config : _SQLite3Config
     }
     class AWSS3Hook {
-        config
-        client
-        bucket_name
+        config : _AWSS3Config
+        client : boto3.Client
+        bucket_name : str
         _delete_all()
     }
     class FileSystemHook {
-        config
-        file_path
+        config : _FileSystemConfig
+        file_path : str
         _delete_all()
     }
     
     class _StorageHooks {
-        file_hook
-        meta_hook
-        default()
+        file_hook : str
+        meta_hook : str
+        default()$ _StorageHooks
     }
     
     class _SQLite3Config {
-        str db_path
-        default()
+        db_path : str
+        default() _SQLite3Config$
     }
     class _FileSystemConfig {
-        str file_path()
-        default()
+        file_path : str
+        default() _FileSystemConfig$
     }
     class _AWSS3Config {
-        bucket_name
-        access_key_id
-        secret_access_key
-        default()
+        bucket_name : str
+        access_key_id : str
+        secret_access_key : str
+        default() _AWSS3Config$
     }
     class _Config {
-        StorageHooks
-        SQLite3
-        FileSystem
-        AWSS3
-        DEFAULT_FILE_PATH
+        StorageHooks : _StorageHooks
+        SQLite3 : _SQLite3Config
+        FileSystem : _FileSystemConfig
+        AWSS3 : _AWSS3Config
+        DEFAULT_FILE_PATH : str
         save()
-        from_file()
+        from_file()  _Config$
     }
 
     Tag o-- Receipt
     
-    DatabaseHook <|-- SQLite3
-    MetaHook <|-- AWSS3Hook
-    MetaHook <|-- FileSystemHook
+    DatabaseHook ..|> SQLite3
+    MetaHook ..|> AWSS3Hook
+    MetaHook ..|> FileSystemHook
     
     SQLite3 *-- _SQLite3Config
     AWSS3Hook *-- _AWSS3Config

@@ -107,14 +107,15 @@ class DatabaseHook(abc.ABC):
             session.commit()
         return self.fetch_receipt(receipt_id)
 
-    def delete_receipt(self, id_: int) -> str:
+    def delete_receipt(self, id_: int):
         with Session(self.engine) as session:
-            stmt = (
-                delete(Receipt).where(Receipt.id == id_).returning(Receipt.storage_key)
-            )
-            key = session.execute(stmt).one()[0]
+            stmt = delete(Receipt).where(
+                Receipt.id == id_
+            )  # .returning(Receipt.storage_key)
+            # key = session.execute(stmt).one()[0]
+            session.execute(stmt)
             session.commit()
-            return key
+            # return key
 
     def create_tag(self, tag: Tag) -> Tag:
         with Session(self.engine) as session:

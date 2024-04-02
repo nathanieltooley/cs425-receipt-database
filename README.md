@@ -1,2 +1,2 @@
-# cs425-receipt-database
+# cs499-receipt-database
 Receipt Database

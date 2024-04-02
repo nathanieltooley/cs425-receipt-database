@@ -42,6 +42,30 @@ classDiagram
     Tag o-- Receipt
 ```
 
+## Flow
+```mermaid
+flowchart LR
+    Client[Flutter Client]
+    API[Flask API]
+    MetaHook[Metadata Hook]
+    FileHook[File Hook]
+    
+    SQL[SQLAlchemy]
+    SQLE[3rd Party SQLAlchemy Dialects]
+    cMeta[Custom]
+    
+    FS[Local File System]
+    AWS[AWS S3]
+    cFile[Custom]
+
+    Client <--> API
+    API <--> MetaHook & FileHook
+    MetaHook --- SQL & SQLE
+    MetaHook -.- cMeta
+    FileHook --- AWS & FS
+    FileHook -.- cFile
+```
+
 ## Sequence
 ### Upload Receipt
 ```mermaid

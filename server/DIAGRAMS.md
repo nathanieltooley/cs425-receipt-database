@@ -38,8 +38,92 @@ classDiagram
       +list[Tag] tags
       +dict export()
     }
+    
+    class DatabaseHook {
+        Engine engine
+        save_objects()
+        delete_objects()
+        create_receipt()
+        fetch_recipt()
+        fetch_receipts()
+        update_receipt()
+        delete_receipt()
+        create_tag()
+        fetch_tag()
+        fetch_tags()
+        update_tag()
+        delete_tag()
+        initialize_storage()
+    }
+    
+    class MetaHook {
+        _make_key()
+        save()
+        replace()
+        fetch()
+        delete()
+        initialize_storage()
+    }
+    
+    class SQLite3 {
+        config
+    }
+    class AWSS3Hook {
+        config
+        client
+        bucket_name
+        _delete_all()
+    }
+    class FileSystemHook {
+        config
+        file_path
+        _delete_all()
+    }
+    
+    class _StorageHooks {
+        file_hook
+        meta_hook
+        default()
+    }
+    
+    class _SQLite3Config {
+        str db_path
+        default()
+    }
+    class _FileSystemConfig {
+        str file_path()
+        default()
+    }
+    class _AWSS3Config {
+        bucket_name
+        access_key_id
+        secret_access_key
+        default()
+    }
+    class _Config {
+        StorageHooks
+        SQLite3
+        FileSystem
+        AWSS3
+        DEFAULT_FILE_PATH
+        save()
+        from_file()
+    }
 
     Tag o-- Receipt
+    
+    DatabaseHook <|-- SQLite3
+    MetaHook <|-- AWSS3Hook
+    MetaHook <|-- FileSystemHook
+    
+    SQLite3 *-- _SQLite3Config
+    AWSS3Hook *-- _AWSS3Config
+    FileSystemHook *-- _FileSystemConfig
+    
+    _StorageHooks --* _Config
+    _SQLite3Config --* _Config
+    _AWSS3Config --* _Config
+    _FileSystemConfig --* _Config
 ```
 
 ## Flow

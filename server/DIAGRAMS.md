@@ -4,6 +4,7 @@
 - [Class Diagram](#class-diagram)
 - [Flow Chart](#flow-chart)
 - [Sequence Diagrams](#sequence-diagrams)
+- [Gantt Charts](#gantt-charts)
 
 ## Entity Relationship Diagram
 ```mermaid
@@ -243,3 +244,28 @@ sequenceDiagram
     MetaHook -->>- Server: Tag
     Server -->>- API : json(Tag)
 ```
+
+## Gantt Charts
+### Original
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+    tickInterval 2week
+    weekday monday
+    section Front End
+        Create Receipt Dashboard    :2024-01-08, 2w
+    
+    section Back End
+        Create Storage Setup(s)     :2024-01-08, 2w
+        Create Remaining Endpoints  :2024-01-08, 2w
+        Implement Storage Migrations:2024-01-22, 2w
+        Create Docker Image         :2024-02-19, 2w
+        
+    section Full Stack
+        Implement Users             :2024-01-22, 2w
+        Add Tagging                 :2024-02-05, 2w
+        Documentation               :2024-01-08, 8w
+```
+
+### Realized

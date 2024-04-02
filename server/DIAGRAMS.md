@@ -1,5 +1,10 @@
 # Diagrams
-## Overview
+## Table of Contents
+- [Entity relationship Diagram](#entity-relationship-diagram)
+- [Class Diagram](#class-diagram)
+- [Flow Chart](#flow-chart)
+- [Sequence Diagrams](#sequence-diagrams)
+
 ## Entity Relationship Diagram
 ```mermaid
 erDiagram
@@ -126,7 +131,7 @@ classDiagram
     _FileSystemConfig --* _Config
 ```
 
-## Flow
+## Flow Chart
 ```mermaid
 flowchart LR
     Client[Flutter Client]
@@ -150,7 +155,7 @@ flowchart LR
     FileHook -.- cFile
 ```
 
-## Sequence
+## Sequence Diagrams
 ### Upload Receipt
 ```mermaid
 sequenceDiagram

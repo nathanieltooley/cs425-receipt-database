@@ -266,11 +266,11 @@ def test_delete_receipt(
     db_hook: DatabaseHook,
     client: FlaskClient,
 ):
-    id = receipt_tag_db.id
+    id_ = receipt_tag_db.id
     response = client.delete(f"/api/receipt/{receipt_tag_db.id}")
 
     assert response.status_code == 204
-    assert db_hook.fetch_receipt(id) is None
+    assert db_hook.fetch_receipt(id_) is None
 
 
 def test_delete_receipt_none(

@@ -253,6 +253,8 @@ gantt
     axisFormat %m-%d
     tickInterval 2week
     weekday monday
+    todayMarker off
+    
     section Front End
         Create Receipt Dashboard    :2024-01-08, 2w
     
@@ -269,3 +271,91 @@ gantt
 ```
 
 ### Realized
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+    tickInterval 2week
+    weekday monday
+    todayMarker off
+    
+    section Front End
+        Create Receipt Dashboard    :2024-01-08, 2w
+        Create Receipts Upload Button : 
+        Create Basic Login/Sign Up Screen : 
+        Make Dashboard Scrollable : 
+        Add Cache : 
+        Show Thumbnails on Dashboard : 
+        Add Receipt Searching : 
+        Update and Delete Receipts : 
+        Add In-App Camera : 
+    
+    section Back End
+        Create Storage Setup(s)     :2024-01-08, 2w
+        Create Remaining Endpoints  :2024-01-08, 2w
+        Save Custom Metadata : 
+        Send Custom Metadata : 
+        Create Fetch Many Endpoints : 
+        Create Docker Image         :2024-02-19, 2w
+        Create Testing Suite : 
+        Add Config File : 
+        
+    section Full Stack
+        
+        Documentation               :2024-01-08, 8w
+```
+
+### Issues
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    
+    Presentation Work	:2023-10-14, 2024-01-11
+    Set up Flutter app	:2023-10-14, 2023-10-31
+    Create a basic, empty home screen	:2023-10-14, 2023-10-24
+    Create a button to upload receipts	:2023-10-14, 2023-10-24
+    Create a dashboard to view receipts	:2023-10-14, 2024-01-11
+    Setup db file(s) and file storage if necessary	:2023-10-14, 2024-02-20
+    Process for converting older versions to newer versions	:2023-10-14
+    Create a basic, login/sign up screen	:2023-10-14, 2023-10-30
+    Set up Flask app	:2023-10-14, 2023-10-17
+    Connect to a storage service	:2023-10-16, 2023-11-01
+    Create GET Receipt endpoint	:2023-10-18, 2023-10-19
+    Create POST Receipt endpoint	:2023-10-18, 2023-10-19
+    Create GET Receipts endpoint	:2023-10-18, 2024-01-16
+    Create POST Delete Receipt endpoint	:2023-10-18, 2023-10-21
+    Upload a file using button	:2023-10-24, 2023-10-31
+    Create React App Boilerplate	:2023-10-26, 2024-01-11
+    Implement OAuth / SSO Login	:2023-10-26
+    Add user receipt tagging	:2023-10-26, 2024-01-25
+    Implement user tagging on S3 buckets	:2023-10-26, 2024-02-08
+    `app.py` `view_receipt` raises exception	:2023-10-31, 2023-11-01
+    Create scrollable region on dashboard	:2024-01-11, 2024-01-18
+    API Endpoint for Multiple Images without Filenames	:2024-01-11, 2024-02-20
+    Boto3 Upload Metadata	:2024-01-11, 2024-01-13
+    Store Receipt Metadata	:2024-01-11, 2024-01-13
+    Add metadata to upload	:2024-01-11, 2024-02-20
+    Create Cache File	:2024-01-11, 2024-01-18
+    Edit View Receipt endpoint to avoid temp files	:2024-01-12, 2024-01-12
+    Create Receipt Holders	:2024-01-16
+    Add Receipt Thumbnails	:2024-01-25, 2024-02-29
+    Add ability to add custom tags to receipts	:2024-01-25, 2024-02-15
+    Create Search Bar	:2024-01-25, 2024-02-01
+    AWS S3 No Key Found error when attempting to view receipt known to exist	:2024-02-13, 2024-02-27
+    Return receipt ID from upload_receipt endpoint	:2024-02-13, 2024-02-13
+    Add update (`PUT`) methods for tags and receipts	:2024-02-13, 2024-02-26
+    Create testing suite	:2024-02-13, 2024-02-23
+    Create a way to initilize the database	:2024-02-13, 2024-02-16
+    Somehow handle a deleted image	:2024-02-13, 2024-02-20
+    Add sorting to requests	:2024-02-15, 2024-02-15
+    Add GitHub actions for linting, testing, and formatting	:2024-02-15, 2024-02-27
+    Add configuration for AWS S3	:2024-02-16, 2024-02-26
+    Fix up layout of frontend dashboard	:2024-02-27, 2024-02-29
+    Use Camera in App	:2024-02-29
+    [Stretch] User Accounts	:2024-02-29
+    [Stretch] OCR	:2024-02-29
+    Allow Update and Delete of Receipts and Tags	:2024-02-29, 2024-03-26
+    Upload receipt doesn't save bytes	:2024-03-12, 2024-03-12
+    Empty Receipt Name	:2024-03-12, 2024-03-26
+    Make API Domain / Port More Flexible	:2024-03-26
+```

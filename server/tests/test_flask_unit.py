@@ -1,6 +1,4 @@
 import io
-import pathlib
-import sys
 from typing import Any, cast
 
 import pytest
@@ -9,9 +7,6 @@ from flask.testing import FlaskClient
 from pytest_mock import MockerFixture
 
 from receipt import Receipt, Tag
-
-file_path = pathlib.Path(__file__).absolute()
-sys.path.append(str(file_path.parent.parent))
 from tests.temp_hooks import MemorySQLite3, file_system
 
 

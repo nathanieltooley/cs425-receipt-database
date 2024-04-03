@@ -1,5 +1,4 @@
 import json
-import logging
 from io import BytesIO
 from typing import cast
 
@@ -7,12 +6,12 @@ from flask import Flask, Response, request, send_file
 from flask_cors import CORS
 from sqlalchemy.exc import NoResultFound
 
-from app_logging import init_logging
+from app_logging import DEBUG, LOGGER, init_logging
 from configure import CONFIG
 from receipt import Receipt, Tag
 from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
 
-init_logging(logging.DEBUG)
+init_logging(local_level=DEBUG)
 
 
 def error_response(status: int, error_name: str, error_message: str) -> Response:
@@ -49,7 +48,7 @@ def create_app(file_hook=None, meta_hook=None):
     if meta_hook is None:
         meta_hook = get_meta_hook(CONFIG.StorageHooks.meta_hook)
 
-    logging.info(f"Starting flask app: {__name__}")
+    LOGGER.info(f"Starting flask app: {__name__}")
     app = Flask(__name__)
     CORS(app)
 
@@ -67,19 +66,19 @@ def create_app(file_hook=None, meta_hook=None):
             )
 
         file = request.files["file"]
-        logging.debug(f"Filename: {file.filename}, Stream: {file.stream}")
+        LOGGER.debug(f"Filename: {file.filename}, Stream: {file.stream}")
 
         if file is None or len(im_bytes := file.stream.read()) == 0:
-            logging.error("UPLOAD ENDPOINT: API client did not send file")
+            LOGGER.error("UPLOAD ENDPOINT: API client did not send file")
             return error_response(404, "Missing File", "No file has been sent.")
 
         if file.filename is None or file.filename == "":
-            logging.error("UPLOAD ENDPOINT: API client sent file with no filename")
+            LOGGER.error("UPLOAD ENDPOINT: API client sent file with no filename")
             return error_response(
                 404, "Missing Filename", "The file has been sent but with no filename."
             )
 
-        logging.debug(f"UPLOAD ENDPOINT: {request.form}")
+        LOGGER.debug(f"UPLOAD ENDPOINT: {request.form}")
         tags = request.form.getlist("tag", type=int)
 
         filename = file.filename
@@ -95,7 +94,7 @@ def create_app(file_hook=None, meta_hook=None):
         receipt.tags = meta_hook.fetch_tags(tag_ids=tags)
 
         receipt = meta_hook.create_receipt(receipt)
-        logging.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
+        LOGGER.info(f"UPLOAD ENDPOINT: Saving uploaded file: {storage_key}")
 
         return receipt.export()
 
@@ -125,18 +124,18 @@ def create_app(file_hook=None, meta_hook=None):
 
         file = send_file(receipt_bytes, download_name=receipt.storage_key)
         file.headers["Upload-Date"] = str(receipt.upload_dt)
-        logging.info(
+        LOGGER.info(
             f"GET_KEY ENDPOINT: "
             f"Returning file, {receipt.storage_key}, to client. "
             f"Size: {len(raw_bytes)};"
         )
-        logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
+        LOGGER.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
         return file
 
     @app.route("/api/receipt/<int:id_>", methods=["PUT"])
     def update_receipt(id_: int):
         """API Endpoint for updating a receipt"""
-        logging.debug(f"UPDATE ENDPOINT: {request.form}")
+        LOGGER.debug(f"UPDATE ENDPOINT: {request.form}")
 
         receipt = meta_hook.update_receipt(
             receipt_id=id_,
@@ -175,8 +174,8 @@ def create_app(file_hook=None, meta_hook=None):
 
         response = [r.export() for r in receipts]
 
-        logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
-        logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
+        LOGGER.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
+        LOGGER.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
         response = sorted(response, key=lambda receipt: receipt["name"])
 
@@ -192,7 +191,7 @@ def create_app(file_hook=None, meta_hook=None):
         r = meta_hook.fetch_receipt(id_)
 
         if r is None:
-            logging.info(
+            LOGGER.info(
                 f"Client attempted to delete receipt -- {id_} -- that doesn't exists"
             )
             return error_response(
@@ -205,7 +204,7 @@ def create_app(file_hook=None, meta_hook=None):
         meta_hook.delete_receipt(id_)
         file_hook.delete(storage_key)
 
-        logging.info(f"DELETE ENDPOINT: Deleting Receipt {id_}")
+        LOGGER.info(f"DELETE ENDPOINT: Deleting Receipt {id_}")
 
         return response_code(204)
 
@@ -222,7 +221,7 @@ def create_app(file_hook=None, meta_hook=None):
         tag_name = request.form.get("name", "")
 
         if tag_name == "":
-            logging.error("UPLOAD ENDPOINT: API client tried making tag with no name")
+            LOGGER.error("UPLOAD ENDPOINT: API client tried making tag with no name")
             return error_response(404, "Missing Name", "Tag Name not specified")
 
         tag = Tag(name=tag_name)
@@ -239,8 +238,8 @@ def create_app(file_hook=None, meta_hook=None):
 
         response = tag.export()
 
-        logging.info("FETCH_TAG ENDPOINT: Returning 1 tag")
-        logging.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
+        LOGGER.info("FETCH_TAG ENDPOINT: Returning 1 tag")
+        LOGGER.debug(f"FETCH_TAG ENDPOINT: Response: {json.dumps(response)}")
 
         return response
 
@@ -250,8 +249,8 @@ def create_app(file_hook=None, meta_hook=None):
 
         response = [t.export() for t in tags]
 
-        logging.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
-        logging.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
+        LOGGER.info(f"FETCH_TAGS ENDPOINT: Returning {len(tags)} tags")
+        LOGGER.debug(f"FETCH_TAGS ENDPOINT: Response: {json.dumps(response)}")
 
         return response
 
@@ -279,7 +278,7 @@ def create_app(file_hook=None, meta_hook=None):
         """
         meta_hook.delete_tag(tag_id)
 
-        logging.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
+        LOGGER.info(f"DELETE TAG ENDPOINT: Deleting tag: {tag_id}")
 
         return response_code(204)
 

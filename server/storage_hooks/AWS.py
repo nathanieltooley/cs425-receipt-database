@@ -2,8 +2,8 @@ import warnings
 
 import boto3
 import botocore.exceptions
-from botocore import logging
 
+from app_logging import LOGGER
 from configure import CONFIG
 from storage_hooks.storage_hooks import FileHook
 
@@ -93,7 +93,7 @@ class AWSS3Hook(FileHook):
                     Bucket=self.bucket_name, Delete={"Objects": formatted}
                 )
         except KeyError:
-            logging.warning("AWS Storage Hook attempted to delete an empty bucket")
+            LOGGER.warning("AWS Storage Hook attempted to delete an empty bucket")
 
     def initialize_storage(self, clean: bool = False):
         """Initialize storage / database with current scheme."""

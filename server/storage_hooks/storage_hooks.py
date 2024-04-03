@@ -2,12 +2,12 @@ import abc
 import datetime as dt
 import enum
 from pathlib import Path
+from typing import Iterable, Optional, Sequence
 
-from sqlalchemy import Engine, select, delete, asc, desc
+from sqlalchemy import Engine, asc, delete, desc, select
 from sqlalchemy.orm import Session, selectinload
 
-from receipt import Receipt, Base, Tag
-from typing import Optional, Sequence, Iterable
+from receipt import Base, Receipt, Tag
 
 UTC = dt.timezone.utc
 

@@ -1,18 +1,16 @@
 import json
 import logging
-
+from io import BytesIO
 from typing import Optional, cast
 
-from sqlalchemy.exc import NoResultFound
-from flask_cors import CORS
 from flask import Flask, Response, request, send_file
-from configure import CONFIG
-from receipt import Receipt, Tag
-from io import BytesIO
-
-from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
+from flask_cors import CORS
+from sqlalchemy.exc import NoResultFound
 
 from app_logging import init_logging
+from configure import CONFIG
+from receipt import Receipt, Tag
+from storage_hooks.hook_config_factory import get_file_hook, get_meta_hook
 
 init_logging(logging.DEBUG)
 

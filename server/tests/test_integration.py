@@ -1,17 +1,14 @@
-from os import walk
-from pprint import pprint
-from typing import List, cast, Any
-from boto3 import logging
-from flask.testing import FlaskClient
-from flask import Flask
-from storage_hooks.storage_hooks import DatabaseHook, FileHook
-from werkzeug.datastructures import MultiDict
-from receipt import Tag, Receipt
+import io
+from typing import Any, List, cast
 
 import pytest
-import io
+from flask import Flask
+from flask.testing import FlaskClient
+from werkzeug.datastructures import MultiDict
 
-from temp_hooks import sqlite3, MemorySQLite3, file_system, aws_s3
+from receipt import Receipt, Tag
+from storage_hooks.storage_hooks import DatabaseHook, FileHook
+from temp_hooks import MemorySQLite3, aws_s3, file_system, sqlite3
 
 
 @pytest.fixture(params=[MemorySQLite3, sqlite3])

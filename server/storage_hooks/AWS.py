@@ -1,8 +1,8 @@
 import warnings
 
 import boto3
-from botocore import logging
 import botocore.exceptions
+from botocore import logging
 
 from configure import CONFIG
 from storage_hooks.storage_hooks import FileHook

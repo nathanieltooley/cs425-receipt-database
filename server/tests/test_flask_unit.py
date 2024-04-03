@@ -1,12 +1,12 @@
 import io
+import pathlib
+import sys
 from typing import Any, cast
-from flask import Flask
-from flask.testing import FlaskClient
 
 import pytest
+from flask import Flask
+from flask.testing import FlaskClient
 from pytest_mock import MockerFixture
-import sys
-import pathlib
 
 from receipt import Receipt, Tag
 

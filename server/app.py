@@ -100,23 +100,23 @@ def create_app(file_hook=None, meta_hook=None):
         return receipt.export()
 
     @app.route("/api/receipt/<int:id>/image")
-    def view_receipt(id: int):
+    def view_receipt(id_: int):
         """API Endpoint for viewing a receipt
 
         This endpoint returns the bytes of the image to the caller
 
         Args:
-            id: The id of the receipt to view
+            id_: The id of the receipt to view
         """
         receipt: Optional[Receipt] = None
 
-        receipt = meta_hook.fetch_receipt(id)
+        receipt = meta_hook.fetch_receipt(id_)
 
         if receipt is None:
             return error_response(
                 404,
                 "Missing Key Error",
-                f"The key, {id}, was not found in the database",
+                f"The key, {id_}, was not found in the database",
             )
 
         # If we made it this far, receipt can not be None so we should be able to safely type cast
@@ -157,17 +157,17 @@ def create_app(file_hook=None, meta_hook=None):
         return receipt.export()
 
     @app.route("/api/receipt/<int:id>/")
-    def fetch_receipt(id: int):
+    def fetch_receipt(id_: int):
         """API Endpoint for viewing receipt metadata
 
         Args:
-            id: The id of the receipt to fetch
+            id_: The id of the receipt to fetch
         """
-        if (receipt := meta_hook.fetch_receipt(id)) is None:
+        if (receipt := meta_hook.fetch_receipt(id_)) is None:
             return error_response(
                 404,
                 "Missing Key Error",
-                f"The key, {id}, was not found in the database",
+                f"The key, {id_}, was not found in the database",
             )
         return receipt.export()
 
@@ -186,27 +186,27 @@ def create_app(file_hook=None, meta_hook=None):
         return response
 
     @app.route("/api/receipt/<int:id>", methods=["DELETE"])
-    def delete_receipt(id: int):
+    def delete_receipt(id_: int):
         """Deletes a receipt in the AWS bucket
 
         Args:
-            id: The id of the receipt to delete
+            id_: The id of the receipt to delete
         """
-        r = meta_hook.fetch_receipt(id)
+        r = meta_hook.fetch_receipt(id_)
 
         if r is None:
             logging.info(
-                f"Client attempted to delete receipt -- {id} -- that doesn't exists"
+                f"Client attempted to delete receipt -- {id_} -- that doesn't exists"
             )
             return error_response(
-                404, "Missing Key Error", f"The key, {id} was not found in the database"
+                404, "Missing Key Error", f"The key, {id_} was not found in the database"
             )
 
         storage_key = r.storage_key
-        meta_hook.delete_receipt(id)
+        meta_hook.delete_receipt(id_)
         file_hook.delete(storage_key)
 
-        logging.info(f"DELETE ENDPOINT: Deleting Receipt {id}")
+        logging.info(f"DELETE ENDPOINT: Deleting Receipt {id_}")
 
         return response_code(204)
 

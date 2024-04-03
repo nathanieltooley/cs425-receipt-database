@@ -99,7 +99,7 @@ def create_app(file_hook=None, meta_hook=None):
 
         return receipt.export()
 
-    @app.route("/api/receipt/<int:id>/image")
+    @app.route("/api/receipt/<int:id_>/image")
     def view_receipt(id_: int):
         """API Endpoint for viewing a receipt
 
@@ -151,7 +151,7 @@ def create_app(file_hook=None, meta_hook=None):
 
         return receipt.export()
 
-    @app.route("/api/receipt/<int:id>/")
+    @app.route("/api/receipt/<int:id_>/")
     def fetch_receipt(id_: int):
         """API Endpoint for viewing receipt metadata
 
@@ -180,7 +180,7 @@ def create_app(file_hook=None, meta_hook=None):
 
         return response
 
-    @app.route("/api/receipt/<int:id>", methods=["DELETE"])
+    @app.route("/api/receipt/<int:id_>", methods=["DELETE"])
     def delete_receipt(id_: int):
         """Deletes a receipt in the AWS bucket
 

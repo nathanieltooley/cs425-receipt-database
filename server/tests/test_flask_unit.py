@@ -41,8 +41,7 @@ def runner(app: Flask):
 
 
 def test_upload_receipt(test_client: FlaskClient, mocker):
-    data = {}
-    data["file"] = (io.BytesIO(b"Test"), "test.jpg")
+    data = {"file": (io.BytesIO(b"Test"), "test.jpg")}
 
     test_receipt = Receipt()
     test_receipt.id = 1
@@ -78,8 +77,7 @@ def test_upload_receipt_missing_file_key(test_client: FlaskClient):
 
 
 def test_upload_receipt_missing_file_data(test_client: FlaskClient):
-    data = {}
-    data["file"] = (io.BytesIO(b""), "test.jpg")
+    data = {"file": (io.BytesIO(b""), "test.jpg")}
 
     response = test_client.post("/api/receipt/", data=data)
 
@@ -231,6 +229,7 @@ def test_fetch_receipt_missing_key(test_client: FlaskClient, mocker):
 
     assert j["error_name"] == "Missing Key Error"
     assert j["error_message"] == "The key, 1, was not found in the database"
+    fetch_receipt_mock.assert_called_once()
 
 
 def test_fetch_many_keys(test_client: FlaskClient, mocker):
@@ -305,6 +304,7 @@ def test_fetch_no_tag(test_client: FlaskClient, mocker):
 
     assert response.status_code == 404
     assert cast(Any, response.json)["error_name"] == "Tag Not Found"
+    fetch_tag_mock.assert_called_once()
 
 
 def test_fetch_tags(test_client: FlaskClient, mocker):

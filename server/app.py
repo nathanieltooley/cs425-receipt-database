@@ -126,7 +126,9 @@ def create_app(file_hook=None, meta_hook=None):
         file = send_file(receipt_bytes, download_name=receipt.storage_key)
         file.headers["Upload-Date"] = str(receipt.upload_dt)
         logging.info(
-            f"GET_KEY ENDPOINT: Returning file, {receipt.storage_key}, to client. Size: {len(raw_bytes)};"
+            f"GET_KEY ENDPOINT: "
+            f"Returning file, {receipt.storage_key}, to client. "
+            f"Size: {len(raw_bytes)};"
         )
         logging.debug(f"GET_KEY ENDPOINT: Headers: {file.headers}")
         return file
@@ -168,6 +170,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/receipt/")
     def fetch_receipt_keys():
+        # ToDo: Server side sorting from query string
         receipts = meta_hook.fetch_receipts()
 
         response = [r.export() for r in receipts]
@@ -175,7 +178,6 @@ def create_app(file_hook=None, meta_hook=None):
         logging.info(f"FETCH_MANY_KEYS ENDPOINT: Returning {len(receipts)} receipts")
         logging.debug(f"FETCH_MANY_KEYS ENDPOINT: Response: {json.dumps(response)}")
 
-        # TODO: Maybe allow the user to customize how they want the response to be sorted
         response = sorted(response, key=lambda receipt: receipt["name"])
 
         return response

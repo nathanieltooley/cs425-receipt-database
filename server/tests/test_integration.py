@@ -47,8 +47,6 @@ def client(app: Flask):
 
 @pytest.fixture()
 def receipt_tag_db(tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook):
-    r_image = None
-
     with open("./tests/test_image1.png", "rb") as file:
         r_image = file.read()
 
@@ -114,8 +112,6 @@ def test_upload_receipt(
     client: FlaskClient,
     tags_db: List["Tag"],
 ):
-    test_data = None
-
     with open("./tests/test_image1.png", "rb") as file:
         test_data = file.read()
 
@@ -220,7 +216,6 @@ def test_fetch_receipt(
 def test_fetch_receipt_keys(
     tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
 ):
-    test_image_data = None
     with open("./tests/test_image1.png", "rb") as f:
         test_image_data = f.read()
 

@@ -4,7 +4,7 @@ from typing import List, cast, Any
 from boto3 import logging
 from flask.testing import FlaskClient
 from flask import Flask
-from storage_hooks.storage_hooks import DatabaseHook, FileHook, StorageHook
+from storage_hooks.storage_hooks import DatabaseHook, FileHook
 from werkzeug.datastructures import MultiDict
 from receipt import Tag, Receipt
 

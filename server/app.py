@@ -1,7 +1,7 @@
 import json
 import logging
 from io import BytesIO
-from typing import Optional, cast
+from typing import cast
 
 from flask import Flask, Response, request, send_file
 from flask_cors import CORS
@@ -108,8 +108,6 @@ def create_app(file_hook=None, meta_hook=None):
         Args:
             id_: The id of the receipt to view
         """
-        receipt: Optional[Receipt] = None
-
         receipt = meta_hook.fetch_receipt(id_)
 
         if receipt is None:
@@ -118,9 +116,6 @@ def create_app(file_hook=None, meta_hook=None):
                 "Missing Key Error",
                 f"The key, {id_}, was not found in the database",
             )
-
-        # If we made it this far, receipt can not be None so we should be able to safely type cast
-        receipt = cast(Receipt, receipt)
 
         # FileNotFoundError will be converted to 404 by flask
         raw_bytes = file_hook.fetch(receipt.storage_key)
@@ -199,7 +194,9 @@ def create_app(file_hook=None, meta_hook=None):
                 f"Client attempted to delete receipt -- {id_} -- that doesn't exists"
             )
             return error_response(
-                404, "Missing Key Error", f"The key, {id_} was not found in the database"
+                404,
+                "Missing Key Error",
+                f"The key, {id_} was not found in the database",
             )
 
         storage_key = r.storage_key

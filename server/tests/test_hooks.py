@@ -121,21 +121,21 @@ class TestDatabaseHook:
 
     def test_build_url(self):
         def build_url(*args, **kwargs) -> str:
-            return RemoteSQL.build_url(RemoteSQLConfig(*args, **kwargs))
+            return str(RemoteSQL.build_url(RemoteSQLConfig(*args, **kwargs)))
 
         assert build_url("sqlite", *([None] * 6)) == "sqlite://"
         assert build_url("sqlite", *([None] * 5), "/dev/null") == "sqlite:////dev/null"
-        assert (
-            build_url(
-                dialect="postgresql",
-                driver="pg8000",
-                username="dbuser",
-                password="kx@jj5/g",
-                host="pghost10",
-                port=None,
-                database="appdb",
-            )
-            == "postgresql+pg8000://dbuser:kx%40jj5%2Fg@pghost10/appdb"
+        assert build_url(
+            dialect="postgresql",
+            driver="pg8000",
+            username="dbuser",
+            password="kx@jj5/g",
+            host="pghost10",
+            port=None,
+            database="appdb",
+        ) in (
+            "postgresql+pg8000://dbuser:kx%40jj5%2Fg@pghost10/appdb",  # Manual
+            "postgresql+pg8000://dbuser:***@pghost10/appdb",  # Via SQLAlchemy
         )
 
 

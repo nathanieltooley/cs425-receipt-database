@@ -1,6 +1,4 @@
-from urllib import parse
-
-from sqlalchemy import create_engine
+from sqlalchemy import URL, create_engine
 
 from configure import CONFIG, ManualRemoteSQLConfig, RemoteSQLConfig
 from storage_hooks.storage_hooks import DatabaseHook
@@ -10,23 +8,17 @@ class RemoteSQL(DatabaseHook):
     """Arbitrary SQLAlchemy Connection"""
 
     @staticmethod
-    def build_url(config: RemoteSQLConfig) -> str:
+    def build_url(config: RemoteSQLConfig) -> URL:
         # See https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls
-        engine_string = config.dialect
-        if config.driver:
-            engine_string += f"+{config.driver}"
-        engine_string += "://"
-        if config.username:
-            engine_string += parse.quote_plus(config.username)
-        if config.password:
-            engine_string += f":{parse.quote_plus(config.password)}"
-        if config.host or config.port:
-            engine_string += "@"
-            engine_string += config.host or ""
-            if config.port:
-                engine_string += f":{config.port}"
-        if config.database is not None:
-            engine_string += f"/{config.database}"
+        engine_string = URL(
+            config.dialect + (f"+{config.driver}" if config.driver else ""),
+            username=config.username,
+            password=config.password,
+            host=config.host,
+            port=config.port,
+            database=config.database,
+            query=None,
+        )
         return engine_string
 
     def __init__(self):

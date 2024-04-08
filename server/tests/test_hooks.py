@@ -3,12 +3,12 @@ import warnings
 import pytest
 
 from receipt import Receipt, Tag
-from storage_hooks.storage_hooks import DatabaseHook, FileHook
-from storage_hooks.file_system import FileSystemHook
 from storage_hooks.AWS import AWSS3Hook
+from storage_hooks.RemoteSQL import RemoteSQL, RemoteSQLConfig
 from storage_hooks.SQLite3 import SQLite3
-
-from temp_hooks import sqlite3, file_system, aws_s3
+from storage_hooks.file_system import FileSystemHook
+from storage_hooks.storage_hooks import DatabaseHook, FileHook
+from temp_hooks import aws_s3, file_system, sqlite3
 
 
 class TestDatabaseHook:
@@ -118,6 +118,25 @@ class TestDatabaseHook:
     def test_delete_tag(self, hook, tag):
         hook.delete_tag(tag.id)
         assert hook.fetch_tag(tag.id) is None
+
+    def test_build_url(self):
+        def build_url(*args, **kwargs) -> str:
+            return RemoteSQL.build_url(RemoteSQLConfig(*args, **kwargs))
+
+        assert build_url("sqlite", *([None] * 6)) == "sqlite://"
+        assert build_url("sqlite", *([None] * 5), "/dev/null") == "sqlite:////dev/null"
+        assert (
+            build_url(
+                dialect="postgresql",
+                driver="pg8000",
+                username="dbuser",
+                password="kx@jj5/g",
+                host="pghost10",
+                port=None,
+                database="appdb",
+            )
+            == "postgresql+pg8000://dbuser:kx%40jj5%2Fg@pghost10/appdb"
+        )
 
 
 class TestFileHook:

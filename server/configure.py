@@ -35,12 +35,12 @@ class _SQLite3Config:
 @dataclass
 class RemoteSQLConfig:
     dialect: str
-    driver: str | None
-    username: str | None
-    password: str | None
-    host: str | None
-    port: str | None
-    database: str | None
+    driver: str | None = None
+    username: str | None = None
+    password: str | None = None
+    host: str | None = None
+    port: str | None = None
+    database: str | None = None
 
     @classmethod
     def default(cls) -> "RemoteSQLConfig":

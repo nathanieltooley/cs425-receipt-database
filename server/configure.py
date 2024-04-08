@@ -14,7 +14,7 @@ DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
 @dataclass
 class _StorageHooks:
     file_hook: Literal["FS", "AWS"]
-    meta_hook: Literal["SQLite3"]
+    meta_hook: Literal["SQLite3", "RemoteSQL"]
 
     @classmethod
     def default(cls) -> "_StorageHooks":

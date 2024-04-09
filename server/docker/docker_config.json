@@ -1,0 +1,12 @@
+{
+    "StorageHooks": {
+      "file_hook": "FS",
+      "meta_hook": "SQLite3"
+    },
+    "SQLite3": {
+      "db_path": "/var/lib/receipt-database/receipts.sqlite3"
+    },
+    "FileSystem": {
+      "file_path": "/var/lib/receipt-database/"
+    }
+}

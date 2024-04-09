@@ -1,17 +1,14 @@
-from os import walk
-from pprint import pprint
-from typing import List, cast, Any
-from boto3 import logging
-from flask.testing import FlaskClient
-from flask import Flask
-from storage_hooks.storage_hooks import DatabaseHook, FileHook, StorageHook
-from werkzeug.datastructures import MultiDict
-from receipt import Tag, Receipt
+import io
+from typing import Any, List, cast
 
 import pytest
-import io
+from flask import Flask
+from flask.testing import FlaskClient
+from werkzeug.datastructures import MultiDict
 
-from temp_hooks import sqlite3, MemorySQLite3, file_system, aws_s3
+from receipt import Receipt, Tag
+from storage_hooks.storage_hooks import DatabaseHook, FileHook
+from temp_hooks import MemorySQLite3, aws_s3, file_system, sqlite3
 
 
 @pytest.fixture(params=[MemorySQLite3, sqlite3])
@@ -50,8 +47,6 @@ def client(app: Flask):
 
 @pytest.fixture()
 def receipt_tag_db(tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook):
-    r_image = None
-
     with open("./tests/test_image1.png", "rb") as file:
         r_image = file.read()
 
@@ -117,8 +112,6 @@ def test_upload_receipt(
     client: FlaskClient,
     tags_db: List["Tag"],
 ):
-    test_data = None
-
     with open("./tests/test_image1.png", "rb") as file:
         test_data = file.read()
 
@@ -223,7 +216,6 @@ def test_fetch_receipt(
 def test_fetch_receipt_keys(
     tags_db: List[Tag], db_hook: DatabaseHook, file_hook: FileHook, client: FlaskClient
 ):
-    test_image_data = None
     with open("./tests/test_image1.png", "rb") as f:
         test_image_data = f.read()
 
@@ -269,11 +261,11 @@ def test_delete_receipt(
     db_hook: DatabaseHook,
     client: FlaskClient,
 ):
-    id = receipt_tag_db.id
+    id_ = receipt_tag_db.id
     response = client.delete(f"/api/receipt/{receipt_tag_db.id}")
 
     assert response.status_code == 204
-    assert db_hook.fetch_receipt(id) is None
+    assert db_hook.fetch_receipt(id_) is None
 
 
 def test_delete_receipt_none(

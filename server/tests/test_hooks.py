@@ -3,12 +3,11 @@ import warnings
 import pytest
 
 from receipt import Receipt, Tag
-from storage_hooks.storage_hooks import DatabaseHook, FileHook
-from storage_hooks.file_system import FileSystemHook
 from storage_hooks.AWS import AWSS3Hook
 from storage_hooks.SQLite3 import SQLite3
-
-from temp_hooks import sqlite3, file_system, aws_s3
+from storage_hooks.file_system import FileSystemHook
+from storage_hooks.storage_hooks import DatabaseHook, FileHook
+from temp_hooks import aws_s3, file_system, sqlite3
 
 
 class TestDatabaseHook:

@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from warnings import warn
 from typing import Sequence
+from warnings import warn
 
-from sqlalchemy import Column, ForeignKey, Table, TypeDecorator, DateTime
+from sqlalchemy import Column, DateTime, ForeignKey, Table, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql.expression import func
 

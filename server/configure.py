@@ -1,12 +1,11 @@
 import argparse
 import json
 import os
-
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Literal
-from pydantic import TypeAdapter
 
 import platformdirs
+from pydantic import TypeAdapter
 
 CURRENT_VERSION = "0.1.0-1.0"
 DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")

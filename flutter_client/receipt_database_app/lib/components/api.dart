@@ -113,6 +113,7 @@ class Api {
             'title': receiptId, 
             'imageData': imageData,
             'tags': tags,
+            'id': tempReceiptId,
             'imageUrl': 'placeholder_url', // placeholder
           };
 
@@ -129,5 +130,37 @@ class Api {
     }
   }
 
+  Future<void> deleteReceipt(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:5000/api/receipt/$id'),
+      );
+
+      if (response.statusCode == 204) {
+        print('Receipt deleted successfully');
+      } else {
+        print('Failed to delete receipt. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting receipt: $e');
+    }
+  }
+
+  static Future<String> createTag(String tagName) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/api/tag/'),
+        body: {'name': tagName},
+      );
+
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        throw Exception('Failed to create tag. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error creating tag: $e');
+    }
+  }
 
 }

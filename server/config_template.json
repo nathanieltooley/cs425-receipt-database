@@ -1,0 +1,17 @@
+{
+    "StorageHooks": {
+      "file_hook": "FS",
+      "meta_hook": "SQLite3"
+    },
+    "SQLite3": {
+      "db_path": "/abs/path/to/receipts.sqlite3"
+    },
+    "FileSystem": {
+      "file_path": "/abs/path/to/receipts"
+    },
+    "AWSS3": {
+      "bucket_name": "MyBucket",
+      "access_key_id": null,
+      "secret_access_key": null
+    }
+}

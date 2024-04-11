@@ -1,12 +1,11 @@
 import argparse
 import json
 import os
-
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Literal
-from pydantic import TypeAdapter
 
 import platformdirs
+from pydantic import TypeAdapter
 
 CURRENT_VERSION = "0.1.0-1.0"
 DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
@@ -15,7 +14,7 @@ DIRS = platformdirs.PlatformDirs("Paperless", "Papertrail")
 @dataclass
 class _StorageHooks:
     file_hook: Literal["FS", "AWS"]
-    meta_hook: Literal["SQLite3"]
+    meta_hook: Literal["SQLite3", "RemoteSQL"]
 
     @classmethod
     def default(cls) -> "_StorageHooks":
@@ -31,6 +30,26 @@ class _SQLite3Config:
         return _SQLite3Config(
             os.path.normpath(DIRS.user_data_dir + "/receipts.sqlite3")
         )
+
+
+@dataclass
+class RemoteSQLConfig:
+    dialect: str
+    driver: str | None = None
+    username: str | None = None
+    password: str | None = None
+    host: str | None = None
+    port: str | None = None
+    database: str | None = None
+
+    @classmethod
+    def default(cls) -> "RemoteSQLConfig":
+        return cls("sqlite", *([None] * 6))
+
+
+@dataclass
+class ManualRemoteSQLConfig:
+    url: str
 
 
 @dataclass
@@ -57,6 +76,9 @@ class _AWSS3Config:
 @dataclass
 class _Config:
     SQLite3: _SQLite3Config = field(default_factory=_SQLite3Config.default)
+    RemoteSQL: RemoteSQLConfig | ManualRemoteSQLConfig = field(
+        default_factory=RemoteSQLConfig.default
+    )
     StorageHooks: _StorageHooks = field(default_factory=_StorageHooks.default)
     FileSystem: _FileSystemConfig = field(default_factory=_FileSystemConfig.default)
     AWSS3: _AWSS3Config = field(default_factory=_AWSS3Config.default)

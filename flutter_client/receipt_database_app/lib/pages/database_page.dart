@@ -90,6 +90,39 @@ class _MyListViewState extends State<MyListView> {
     }
   }
 
+  Future<void> _confirmAndDeleteReceipt(int id) async {
+    // Show confirmation dialog before deleting the receipt
+    bool confirmDelete = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Receipt'),
+          content: Text('Are you sure you want to delete this receipt?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Cancel deletion
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Confirm deletion
+              },
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user confirms deletion, call deleteReceipt function
+    if (confirmDelete == true) {
+      Api apiService = Api();
+      await apiService.deleteReceipt(id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -110,6 +143,7 @@ class _MyListViewState extends State<MyListView> {
             itemBuilder: (context, index) {
             final title = filteredReceipts[index]['title'] as String;
             final List<String> tags = filteredReceipts[index]['tags'] as List<String>;
+            final id = filteredReceipts[index]['id'] as int;
             final imageData =
                   filteredReceipts[index]['imageData'] as Uint8List;
 
@@ -157,6 +191,10 @@ class _MyListViewState extends State<MyListView> {
                       }
                     },
                   ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _confirmAndDeleteReceipt(id),
+                  ),
                 ),
               );
             },
@@ -183,6 +221,45 @@ class _DatabasePageState extends State<DatabasePage> {
   TextEditingController _searchController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
   TextEditingController _tagController = TextEditingController();
+  final TextEditingController _addTagController = TextEditingController();
+
+  Future<void> _addTag(String tagName) async {
+    // Replace this with your API call to add the tag
+    print('Adding tag: $tagName');
+    await Api.createTag(tagName);
+    // await api.createTag(tagName);
+  }
+
+  void _showAddTagDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add Tag'),
+          content: TextField(
+            controller: _tagController, // Reuse the existing controller
+            decoration: InputDecoration(labelText: 'Tag Name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final tagName = _tagController.text;
+                await _addTag(tagName);
+                Navigator.of(context).pop();
+              },
+              child: Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   // Method to show upload receipt dialog
   Future<void> _showUploadReceiptDialog() async {
@@ -231,6 +308,8 @@ class _DatabasePageState extends State<DatabasePage> {
     });
 
     if (filePath != null) {
+      _fileName = _nameController.text;
+      _tag = _tagController.text;
       setState(() {
         _filePath = filePath;
       });
@@ -260,25 +339,17 @@ class _DatabasePageState extends State<DatabasePage> {
               print('Settings button pressed');
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              _showAddTagDialog(context);
+            },
+          ),
         ],
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-                    // Text field for custom file name
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              hintText: 'Enter file name...',
-            ),
-          ),
-          // Text field for tag (optional)
-          TextField(
-            controller: _tagController,
-            decoration: InputDecoration(
-              hintText: 'Enter tag (optional)...',
-            ),
-          ),
           ElevatedButton(
             onPressed: _showUploadReceiptDialog,
             child: Text('Upload Receipt'),

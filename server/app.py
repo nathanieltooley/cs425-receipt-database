@@ -42,6 +42,7 @@ def response_code(status: int) -> Response:
 
 
 def create_app(file_hook=None, meta_hook=None):
+    """Creates Flask App. For more info on each endpoint, see ENDPOINTS.md"""
     if file_hook is None:
         file_hook = get_file_hook(CONFIG.StorageHooks.file_hook)
 
@@ -100,7 +101,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/receipt/<int:id_>/image")
     def view_receipt(id_: int):
-        """API Endpoint for viewing a receipt
+        """API Endpoint for viewing a receipt's image
 
         This endpoint returns the bytes of the image to the caller
 
@@ -169,6 +170,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/receipt/")
     def fetch_receipt_keys():
+        """API Endpoint for fetching many receipts' metadata"""
         # ToDo: Server side sorting from query string
         receipts = meta_hook.fetch_receipts()
 
@@ -183,7 +185,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/receipt/<int:id_>", methods=["DELETE"])
     def delete_receipt(id_: int):
-        """Deletes a receipt in the AWS bucket
+        """Deletes a receipt from database and file hook
 
         Args:
             id_: The id of the receipt to delete
@@ -229,6 +231,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/tag/<int:tag_id>")
     def fetch_tag(tag_id: int):
+        """API Endpoint for fetching a tag's name given its ID"""
         tag = meta_hook.fetch_tag(tag_id)
 
         if tag is None:
@@ -245,6 +248,7 @@ def create_app(file_hook=None, meta_hook=None):
 
     @app.route("/api/tag/")
     def fetch_tags():
+        """API Endpoint to fetch all tags"""
         tags = meta_hook.fetch_tags()
 
         response = [t.export() for t in tags]

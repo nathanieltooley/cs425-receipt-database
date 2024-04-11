@@ -46,6 +46,7 @@ classDiagram
     }
     
     class DatabaseHook {
+        <<abstract>>
         engine : sqlalchemy.Engine
         save_objects()
         delete_objects()
@@ -62,7 +63,8 @@ classDiagram
         initialize_storage()
     }
     
-    class MetaHook {
+    class FileHook {
+        <<abstract>>
         _make_key() str$
         save() str*
         replace()*
@@ -73,6 +75,11 @@ classDiagram
     
     class SQLite3 {
         config : _SQLite3Config
+    }
+    class RemoteSQL {
+        config : [Manual]RemoteSQLConfig
+        is_manual_url : bool
+        url : str
     }
     class AWSS3Hook {
         config : _AWSS3Config
@@ -96,19 +103,33 @@ classDiagram
         db_path : str
         default() _SQLite3Config$
     }
+    class RemoteSQLConfig {
+        dialect : str
+        driver : str | None
+        username : str | None
+        password : str | None
+        host : str | None
+        port : str | None
+        database : str | None
+        default() RemoteSQLConfig$
+    }
+    class ManualRemoteSQLConfig {
+        url: str
+    }
     class _FileSystemConfig {
         file_path : str
         default() _FileSystemConfig$
     }
     class _AWSS3Config {
         bucket_name : str
-        access_key_id : str
-        secret_access_key : str
+        access_key_id : str | None
+        secret_access_key : str | None
         default() _AWSS3Config$
     }
     class _Config {
         StorageHooks : _StorageHooks
         SQLite3 : _SQLite3Config
+        RemoteSQL: [Manual]RemoteSQLConfig
         FileSystem : _FileSystemConfig
         AWSS3 : _AWSS3Config
         DEFAULT_FILE_PATH : str
@@ -118,15 +139,20 @@ classDiagram
 
     Tag o-- Receipt
     
-    DatabaseHook ..|> SQLite3
-    MetaHook ..|> AWSS3Hook
-    MetaHook ..|> FileSystemHook
+    DatabaseHook <|-- SQLite3
+    DatabaseHook <|-- RemoteSQL
+    FileHook <|-- AWSS3Hook
+    FileHook <|-- FileSystemHook
     
-    SQLite3 *-- _SQLite3Config
-    AWSS3Hook *-- _AWSS3Config
-    FileSystemHook *-- _FileSystemConfig
+    SQLite3 o-- _SQLite3Config
+    RemoteSQL o-- RemoteSQLConfig
+    RemoteSQL o-- ManualRemoteSQLConfig
+    AWSS3Hook o-- _AWSS3Config
+    FileSystemHook o-- _FileSystemConfig
     
     _StorageHooks --* _Config
+    RemoteSQLConfig --* _Config
+    ManualRemoteSQLConfig --* _Config
     _SQLite3Config --* _Config
     _AWSS3Config --* _Config
     _FileSystemConfig --* _Config

@@ -159,6 +159,10 @@ The most likely locations are as follows:
   - Windows - `C:\Users\<username>\AppData\Local\Papertrail\Paperless`
   - Linux - `/home/<username>/.local/share/Paperless`
 
+## Extending
+One of the goals of this project is to make it easy to add more hooks.
+Documentation for what is expected of each hook method can be found in [storage_hooks.py](storage_hooks/storage_hooks.py).
+
 ## Development Guidelines
 Python style guides follow [the Black code style](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html).
 Python docstrings follow [Google's Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).

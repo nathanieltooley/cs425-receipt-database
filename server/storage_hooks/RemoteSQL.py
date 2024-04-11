@@ -10,14 +10,13 @@ class RemoteSQL(DatabaseHook):
     @staticmethod
     def build_url(config: RemoteSQLConfig) -> URL:
         # See https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls
-        engine_string = URL(
+        engine_string = URL.create(
             config.dialect + (f"+{config.driver}" if config.driver else ""),
             username=config.username,
             password=config.password,
             host=config.host,
             port=config.port,
             database=config.database,
-            query=None,
         )
         return engine_string
 

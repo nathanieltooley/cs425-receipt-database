@@ -2,19 +2,62 @@
 Hosts API and puts data in configured storage.
 
 ## Setup
-### It is recommended to use a virtual environment.
+### Virtual Environment
+It is recommend to use a virtual environment to avoid dependency issues.
 ```shell
+# Create the virtual environment
 python -m venv ./venv
+
+# Activate the virtual environment
+source venv/bin/activate  # macOS / Linux
+venv\Scripts\actiate.bat  # Windows CMD
+venv\Scripts\Activate.ps1 # Windows PowerShell
 ```
-### Install requirements.
+### Install Requirements
 ```shell
 python -m pip install -r requirements.txt
-``` 
-or 
-```shell
-pip install -r requirements.txt 
 ```
-> **Note:** `black` is included for style consistency while developing, but is not necessary for running.
+> **Note:** Some requirements are only needed in some cases
+> and may optionally be ignored. 
+<details>
+<summary>Conditional Requirements</summary>
+
+- `black`
+  - Used for code styling / formatting during development
+- `pytest` and `pytest-mock`
+  - Used for running tests
+- `gunicorn`
+  - "Included" production WSGI server (see [Running](#running))
+- `boto3` and `botocore`
+  - Used for AWS S3 connection
+</details>
+
+### Configure `config.json`
+See [Configuration](#configuration)
+
+### Initialize Hooks
+The hooks need to be initialized to ensure proper operation.
+```shell
+python configure.py initialize <hook> [--clean]
+```
+Replace `<hook>` with `meta` for the database hook, `file` for the file hook, or `both` for both.
+The `--clean` parameter will delete preexisting data in applicable locations if included.
+
+## Running
+For running in production, a Use a production WSGI server should be used.
+[Gunicorn](https://gunicorn.org/) is included as a requirement for this purpose, 
+but you may choose to use [another](https://flask.palletsprojects.com/en/2.3.x/deploying/).
+
+Ensure your virtual environment is active if applicable.
+```shell
+gunicorn -w 4 'app:create_app()'
+```
+
+Gunicorn, by default, listens on `127.0.0.1:8000`. 
+This will only listen to requests from the local host and on port 8000.
+This can be changed with the `-b` argument. 
+E.g. `-b 0.0.0.0:1234` to listen to any request to port 1234.
+> Note: You may want to use a reverse proxy instead of setting Gunicorn to `0.0.0.0`.
 
 ## Configuration
 Behavior is configured with the `config.json` file.

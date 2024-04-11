@@ -5,6 +5,7 @@ import '/pages/image_cache.dart' as MyImageCache; // Updated import statement
 import '/pages/view_receipt.dart';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 class MyListView extends StatefulWidget {
   const MyListView({super.key});
@@ -28,52 +29,55 @@ class _MyListViewState extends State<MyListView> {
     fetchAndSetReceiptData();
   }
 
-  Future<void> fetchAndSetReceiptData() async {
-    try {
-      // Make the API call using fetchManyReceipts
-      final apiService = Api();
-      final List<Map<String, dynamic>> receipts =
-          await apiService.fetchManyReceipts();
+Future<void> fetchAndSetReceiptData() async {
+  try {
+    // Make the API call using fetchManyReceipts
+    final apiService = Api();
+    final List<Map<String, dynamic>> receipts =
+        await apiService.fetchManyReceipts();
 
-      // Iterate through the receipts and add them to receiptDataList
-      for (final receipt in receipts) {
-        // Store in cache using the ImageCache instance
-        await imageCache.storeBytesInCache(
-            receipt['imageData'], receipt['title']);
-      }
+    // Clear existing receipt data
+    receiptDataList.clear();
+    filteredReceipts.clear(); // Clear filtered receipts list
 
-      // Set the state to update the UI with the new data
-      setState(() {
-        receiptDataList.addAll(receipts);
-        filteredReceipts.addAll(receipts);
-      });
-    } catch (e) {
-      // Handle errors
-      print('Error fetching and setting receipt data: $e');
+    // Iterate through the receipts and add them to receiptDataList
+    for (final receipt in receipts) {
+      // Store in cache using the ImageCache instance
+      await imageCache.storeBytesInCache(
+          receipt['imageData'], receipt['title']);
     }
-  }
 
- void _filterReceipts(String query) {
+    // Set the state to update the UI with the new data
     setState(() {
-      filteredReceipts = receiptDataList.where((receipt) {
-        final String title = receipt['title'].toLowerCase();
-        final List<String> tags = receipt['tags'];
-
-        // Check if the title contains the query
-        final bool titleMatches = title.contains(query.toLowerCase());
-
-        // Check if any tag contains the query
-        final bool tagsMatch = tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()));
-
-        // Return true if either title or tags match the query
-        return titleMatches || tagsMatch;
-      }).toList();
-      filteredReceipts = receiptDataList
-          .where((receipt) =>
-              receipt['title'].toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      receiptDataList.addAll(receipts);
+      filteredReceipts.addAll(receipts);
     });
+  } catch (e) {
+    // Handle errors
+    print('Error fetching and setting receipt data: $e');
   }
+  print("refreshed");
+}
+
+
+void _filterReceipts(String query) {
+  setState(() {
+    filteredReceipts = receiptDataList.where((receipt) {
+      final String title = receipt['title'].toLowerCase();
+      final List<String> tags = receipt['tags'];
+
+      // Check if the title contains the query
+      final bool titleMatches = title.contains(query.toLowerCase());
+
+      // Check if any tag contains the query
+      final bool tagsMatch = tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()));
+
+      // Return true if either title or tags match the query
+      return titleMatches || tagsMatch;
+    }).toList();
+  });
+}
+
 
   Future<Uint8List?> generateThumbnail(Uint8List imageData) async {
     try {
@@ -90,38 +94,39 @@ class _MyListViewState extends State<MyListView> {
     }
   }
 
-  Future<void> _confirmAndDeleteReceipt(int id) async {
-    // Show confirmation dialog before deleting the receipt
-    bool confirmDelete = await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete Receipt'),
-          content: Text('Are you sure you want to delete this receipt?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false); // Cancel deletion
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(true); // Confirm deletion
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+Future<void> _confirmAndDeleteReceipt(int id) async {
+  // Show confirmation dialog before deleting the receipt
+  bool confirmDelete = await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Delete Receipt'),
+        content: Text('Are you sure you want to delete this receipt?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false); // Cancel deletion
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(true); // Confirm deletion
+              // Create an instance of the Api class
+              Api apiService = Api();
+              // Delete the receipt using the instance method
+              await apiService.deleteReceipt(id);
+              // Refresh the UI after deletion
+              await fetchAndSetReceiptData();
+            },
+            child: Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-    // If user confirms deletion, call deleteReceipt function
-    if (confirmDelete == true) {
-      Api apiService = Api();
-      await apiService.deleteReceipt(id);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -223,12 +228,15 @@ class _DatabasePageState extends State<DatabasePage> {
   TextEditingController _tagController = TextEditingController();
   final TextEditingController _addTagController = TextEditingController();
 
+  final GlobalKey<_MyListViewState> _myListViewKey = GlobalKey<_MyListViewState>();
+
   Future<void> _addTag(String tagName) async {
     // Replace this with your API call to add the tag
     print('Adding tag: $tagName');
     await Api.createTag(tagName);
     // await api.createTag(tagName);
   }
+
 
   void _showAddTagDialog(BuildContext context) {
     showDialog(
@@ -262,7 +270,32 @@ class _DatabasePageState extends State<DatabasePage> {
   }
 
   // Method to show upload receipt dialog
-  Future<void> _showUploadReceiptDialog() async {
+  Future<void> fetchAndSetReceiptData() async {
+    _myListViewKey.currentState?.fetchAndSetReceiptData();
+  }
+
+Future<void> _pickAndUploadFromCamera() async {
+  final imagePicker = ImagePicker();
+  final XFile? pickedFile = await imagePicker.pickImage(source: ImageSource.camera);
+  
+  if (pickedFile != null) {
+    _fileName = _nameController.text;
+    _tag = _tagController.text;
+
+    try {
+      await Api.uploadFile(pickedFile.path, _fileName, _tag);
+      print('File uploaded successfully');
+      // Refresh the UI after uploading
+      await fetchAndSetReceiptData();
+    } catch (e) {
+      print('Error uploading file: $e');
+    }
+  } else {
+    print('No image captured');
+  }
+}
+
+   Future<void> _showUploadReceiptDialog() async {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -288,7 +321,14 @@ class _DatabasePageState extends State<DatabasePage> {
                   Navigator.of(context).pop(); // Close the dialog
                   await _pickAndUploadFile();
                 },
-                child: Text('Upload'),
+                child: Text('Upload from Files'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close the dialog
+                  await _pickAndUploadFromCamera();
+                },
+                child: Text('Upload from Camera'),
               ),
             ],
           ),
@@ -297,33 +337,35 @@ class _DatabasePageState extends State<DatabasePage> {
     );
   }
 
+
   // Allows user to pick a file to upload
-  Future<void> _pickAndUploadFile() async {
-    String? filePath = await FilePicker.platform.pickFiles().then((result) {
-      if (result != null) {
-        return result.files.single.path;
-      } else {
-        return null;
-      }
-    });
-
-    if (filePath != null) {
-      _fileName = _nameController.text;
-      _tag = _tagController.text;
-      setState(() {
-        _filePath = filePath;
-      });
-
-      try {
-         await Api.uploadFile(_filePath, _fileName, _tag);
-        print('File uploaded successfully');
-      } catch (e) {
-        print('Error uploading file: $e');
-      }
+Future<void> _pickAndUploadFile() async {
+  String? filePath = await FilePicker.platform.pickFiles().then((result) {
+    if (result != null) {
+      return result.files.single.path;
     } else {
-      print('No file selected');
+      return null;
     }
+  });
+
+  if (filePath != null) {
+    _fileName = _nameController.text;
+    _tag = _tagController.text;
+
+    try {
+      await Api.uploadFile(filePath, _fileName, _tag);
+      print('File uploaded successfully');
+
+    } catch (e) {
+      print('Error uploading file: $e');
+    }
+  } else {
+    print('No file selected');
   }
+
+  await fetchAndSetReceiptData(); // <-- Refresh the receipt data
+  print("refreshed");
+}
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +398,9 @@ class _DatabasePageState extends State<DatabasePage> {
           ),
           SizedBox(height: 20),
           Expanded(
-            child: MyListView(),
+            child: MyListView(
+              key: _myListViewKey,
+            ),
           ),
         ],
       ),
